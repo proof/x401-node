@@ -101,7 +101,9 @@ const payload = verifier.buildPayload({
 ```
 
 ##### Payload in the header
+
 Return the Proof requirement as a header:
+
 ```ts
 response.setHeader("PROOF-REQUIRED", verifier.encodePayload(payload));
 ```
