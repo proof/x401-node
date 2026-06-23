@@ -4,6 +4,7 @@ export * as verifier from "./verifier.ts";
 export { X401ValidationError } from "./validate.ts";
 
 export {
+  ACCESS_TOKEN_TYPE,
   DC_API_PROTOCOL,
   HEADER,
   TOKEN_EXCHANGE_GRANT_TYPE,
@@ -20,6 +21,7 @@ export type {
   OAuthMetadata,
   PaymentObject,
   PresentationResult,
+  TokenExchangeRequest,
   TokenExchangeResponse,
   VPArtifact,
   X401ErrorObject,

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   agent,
   verifier,
+  ACCESS_TOKEN_TYPE,
   HEADER,
   TOKEN_EXCHANGE_GRANT_TYPE,
   VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
@@ -183,6 +184,20 @@ test("token-exchange request build and verifier parse agree on fixed parameters"
   assert.equal(parsed.resource, RESOURCE);
   const reDecoded = verifier.decodeVPArtifact(parsed.subject_token);
   assert.equal(reDecoded.response?.data, "opaque");
+});
+
+test("token-exchange response carrying ACCESS_TOKEN_TYPE parses", () => {
+  assert.equal(
+    ACCESS_TOKEN_TYPE,
+    "urn:ietf:params:oauth:token-type:access_token",
+  );
+  const parsed = agent.parseTokenExchangeResponse({
+    access_token: "verification-token",
+    token_type: "Bearer",
+    issued_token_type: ACCESS_TOKEN_TYPE,
+  });
+  assert.equal(parsed.issued_token_type, ACCESS_TOKEN_TYPE);
+  assert.equal(parsed.token_type, "Bearer");
 });
 
 test("parseTokenExchange rejects a wrong grant_type", () => {

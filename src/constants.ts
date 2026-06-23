@@ -26,3 +26,7 @@ export const TOKEN_EXCHANGE_GRANT_TYPE =
 
 export const VP_ARTIFACT_SUBJECT_TOKEN_TYPE =
   "urn:x401:params:oauth:token-type:vp_artifact";
+
+/** RECOMMENDED `issued_token_type` value for a Bearer Verification Token (RFC 8693). */
+export const ACCESS_TOKEN_TYPE =
+  "urn:ietf:params:oauth:token-type:access_token";

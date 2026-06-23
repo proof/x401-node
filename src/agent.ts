@@ -10,6 +10,7 @@ import { parseX401ErrorObject, parseX401Payload } from "./validate.ts";
 import type {
   DigitalCredentialRequest,
   PresentationResult,
+  TokenExchangeRequest,
   TokenExchangeResponse,
   VPArtifact,
   X401ErrorObject,
@@ -182,15 +183,16 @@ export function buildTokenExchangeForm(
   artifact: VPArtifact,
   options: TokenExchangeOptions = {},
 ): URLSearchParams {
+  const request: TokenExchangeRequest = {
+    grant_type: TOKEN_EXCHANGE_GRANT_TYPE,
+    subject_token_type: VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
+    subject_token: encodeVPArtifact(artifact),
+    ...(options.resource !== undefined && { resource: options.resource }),
+    ...(options.audience !== undefined && { audience: options.audience }),
+  };
   const form = new URLSearchParams();
-  form.set("grant_type", TOKEN_EXCHANGE_GRANT_TYPE);
-  form.set("subject_token_type", VP_ARTIFACT_SUBJECT_TOKEN_TYPE);
-  form.set("subject_token", encodeVPArtifact(artifact));
-  if (options.resource !== undefined) {
-    form.set("resource", options.resource);
-  }
-  if (options.audience !== undefined) {
-    form.set("audience", options.audience);
+  for (const [key, value] of Object.entries(request)) {
+    form.set(key, value);
   }
   return form;
 }

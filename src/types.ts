@@ -1,4 +1,9 @@
-import type { DC_API_PROTOCOL, X401_SCHEME } from "./constants.ts";
+import type {
+  DC_API_PROTOCOL,
+  TOKEN_EXCHANGE_GRANT_TYPE,
+  VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
+  X401_SCHEME,
+} from "./constants.ts";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
@@ -111,4 +116,13 @@ export interface TokenExchangeResponse {
   expires_in?: number;
   scope?: string;
   x401?: JsonObject;
+}
+
+/** The fixed parameters of an x401 OAuth Token Exchange request. */
+export interface TokenExchangeRequest {
+  grant_type: typeof TOKEN_EXCHANGE_GRANT_TYPE;
+  subject_token_type: typeof VP_ARTIFACT_SUBJECT_TOKEN_TYPE;
+  subject_token: string;
+  resource?: string;
+  audience?: string;
 }
