@@ -86,10 +86,8 @@ export function embedHtmlData(payload: X401Payload): string {
   return `<data value="${EMBEDDED_DATA_VALUE}" hidden>${escapeHtml(json)}</data>`;
 }
 
-// The spec requires the <data> text content to be the unencoded JSON object, directly
-// readable by consumers that retain only the object. Escape only the two characters that
-// are significant in HTML element text content: `&` (entity start) and `<` (tag/`</data>`
-// start). Quotes and `>` are left as-is so the content stays valid JSON.
+// Escape only `&` and `<`; leaving quotes and `>` keeps the embedded text directly
+// readable as JSON, which the spec requires of the `<data>` content.
 function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }

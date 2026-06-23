@@ -60,9 +60,9 @@ export interface PaymentObject {
 export interface X401Payload {
   scheme: typeof X401_SCHEME;
   version: string;
-  /** The composed Digital Credentials request. Load-bearing. */
+  /** The composed Digital Credentials request. Required. */
   presentation_requirements: DigitalCredentialRequest;
-  /** OAuth token-exchange metadata. Load-bearing. */
+  /** OAuth token-exchange metadata. Required. */
   oauth: OAuthMetadata;
   /** HTTPS URL of a DIF Credential Trust Establishment document. Optional hint. */
   trust_establishment?: string;
