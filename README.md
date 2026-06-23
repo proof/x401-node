@@ -76,11 +76,6 @@ For clients that read the body but not the headers, mirror the requirement as an
 const html = `<article>…</article>${verifier.embedHtmlData(payload)}`;
 ```
 
-> **Stateless nonce (optional).** x401 0.2.0 has no Verifier Challenge; freshness/replay live in the
-> OpenID4VP `nonce` inside your request. To operate statelessly you can seal route context into that
-> `nonce` with `createEncryptor` (an AES-256-GCM + HKDF authenticated-state primitive) and recover it
-> on retry. The same secret must be present wherever you validate.
-
 ### Verify a Proof (`PROOF-PRESENTATION`)
 
 Decode the artifact, then validate the presentation against the request you composed (binding,

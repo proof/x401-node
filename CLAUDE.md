@@ -14,9 +14,6 @@ Two consumer roles, exported as namespaces:
   `presentation_requirements`), emit the embedded `<data>` mirror, decode incoming VP Artifacts /
   Token Objects, parse token-exchange requests, encode error objects.
 
-Plus `createEncryptor` (AES-GCM + HKDF authenticated-state primitive; e.g. for a verifier to seal
-its own stateless OpenID4VP `nonce`).
-
 Spec-conformance harness lives under `spec/` (pinned schema + extracted examples + normative ledger)
 and `scripts/` (`sync-spec-fixtures.ts`, `extract-normative.ts`). See `spec/UPGRADING.md` for the
 repeatable spec-upgrade loop and `spec/conformance.md` for the requirement→code map.
@@ -66,7 +63,6 @@ repeatable spec-upgrade loop and `spec/conformance.md` for the requirement→cod
 - `src/types.ts` — wire-format types (no runtime code): flat `X401Payload`, `DigitalCredentialRequest`, `PresentationResult`, `VPArtifact`.
 - `src/encoding.ts` — base64url JSON helpers over `@owf/identity-common`; proof-header comma guard.
 - `src/validate.ts` — structural validators / type guards (`X401ValidationError`).
-- `src/encryptor.ts` — `createEncryptor` (AES-GCM + HKDF authenticated-state primitive; `encrypt`/`decrypt`).
 - `src/agent.ts` — agent-side primitives (`getDigitalCredentialRequest`, `buildVPArtifact`/`buildVPArtifactReference`, …).
 - `src/verifier.ts` — verifier-side primitives (`buildPayload`, `embedHtmlData`, decoders, token-exchange parse, error builder).
 - `src/index.ts` — public barrel (explicit named exports; `agent`/`verifier` namespaces).

@@ -1,13 +1,9 @@
 export * as agent from "./agent.ts";
 export * as verifier from "./verifier.ts";
 
-export { createEncryptor } from "./encryptor.ts";
-export type { Encryptor, EncryptorOptions } from "./encryptor.ts";
-
 export { X401ValidationError } from "./validate.ts";
 
 export {
-  ACCESS_TOKEN_TYPE,
   DC_API_PROTOCOL,
   HEADER,
   TOKEN_EXCHANGE_GRANT_TYPE,
@@ -17,7 +13,6 @@ export {
 
 export type {
   DCApiProtocol,
-  DCQLQuery,
   DigitalCredentialRequest,
   DigitalCredentialRequestEntry,
   JsonObject,
@@ -25,7 +20,6 @@ export type {
   OAuthMetadata,
   PaymentObject,
   PresentationResult,
-  TokenExchangeRequest,
   TokenExchangeResponse,
   VPArtifact,
   X401ErrorObject,
