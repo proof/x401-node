@@ -1,0 +1,17 @@
+{
+  "scheme": "x401",
+  "version": "0.2.0",
+  "presentation_requirements": {
+    "requests": [
+      {
+        "protocol": "openid4vp-v1-signed",
+        "data": {
+          "request": "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ..."
+        }
+      }
+    ]
+  },
+  "oauth": {
+    "token_endpoint": "https://bank.example.com/oauth/token"
+  }
+}

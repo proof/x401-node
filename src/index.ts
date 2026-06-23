@@ -8,6 +8,7 @@ export { X401ValidationError } from "./validate.ts";
 
 export {
   ACCESS_TOKEN_TYPE,
+  DC_API_PROTOCOL,
   HEADER,
   TOKEN_EXCHANGE_GRANT_TYPE,
   VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
@@ -15,16 +16,17 @@ export {
 } from "./constants.ts";
 
 export type {
+  DCApiProtocol,
   DCQLQuery,
-  IssuersRef,
+  DigitalCredentialRequest,
+  DigitalCredentialRequestEntry,
   JsonObject,
   JsonValue,
   OAuthMetadata,
   PaymentObject,
-  ProofObject,
+  PresentationResult,
   TokenExchangeRequest,
   TokenExchangeResponse,
-  VerifierChallenge,
   VPArtifact,
   X401ErrorObject,
   X401Payload,

@@ -1,0 +1,35 @@
+{
+  "response_type": "vp_token",
+  "response_mode": "dc_api",
+  "client_id": "x509_san_dns:bank.example.com",
+  "expected_origins": [
+    "https://bank.example.com"
+  ],
+  "nonce": "uX7Vq3mZJH6MeN0qz2L7SQ",
+  "dcql_query": {
+    "credentials": [
+      {
+        "id": "financial_customer",
+        "format": "jwt_vc_json",
+        "meta": {
+          "type_values": [
+            "FinancialCustomerCredential"
+          ]
+        },
+        "claims": [
+          {
+            "path": [
+              "credentialSubject",
+              "assurance_level"
+            ],
+            "values": [
+              "VC-AL2",
+              "VC-AL3"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "exp": 1746557100
+}

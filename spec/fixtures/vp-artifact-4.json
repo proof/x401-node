@@ -1,0 +1,7 @@
+{
+  "request_id": "proof-template-financial-customer-v1",
+  "response": {
+    "protocol": "openid4vp-v1-signed",
+    "data": "<wallet-returned-presentation-result>"
+  }
+}

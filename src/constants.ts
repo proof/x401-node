@@ -1,8 +1,15 @@
 export const X401_SCHEME = "x401" as const;
 
-export const X401_VERSION = "0.1.0" as const;
+export const X401_VERSION = "0.2.0" as const;
 
-export const PRESENTATION_PROTOCOL = "openid4vp" as const;
+/**
+ * W3C Digital Credentials API protocol identifiers for an entry in
+ * `presentation_requirements.requests`. `SIGNED` is RECOMMENDED.
+ */
+export const DC_API_PROTOCOL = {
+  SIGNED: "openid4vp-v1-signed",
+  UNSIGNED: "openid4vp-v1-unsigned",
+} as const;
 
 export const HEADER = {
   PROOF_REQUIRED: "PROOF-REQUIRED",

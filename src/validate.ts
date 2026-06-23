@@ -1,4 +1,4 @@
-import { PRESENTATION_PROTOCOL, X401_SCHEME } from "./constants.ts";
+import { DC_API_PROTOCOL, X401_SCHEME } from "./constants.ts";
 import type {
   JsonObject,
   VPArtifact,
@@ -22,6 +22,8 @@ function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
+const DC_API_PROTOCOLS: readonly string[] = Object.values(DC_API_PROTOCOL);
+
 export function parseX401Payload(value: unknown): X401Payload {
   if (!isObject(value)) {
     throw new X401ValidationError("x401 payload must be a JSON object.");
@@ -32,41 +34,37 @@ export function parseX401Payload(value: unknown): X401Payload {
   if (!isString(value.version)) {
     throw new X401ValidationError('x401 payload "version" is required.');
   }
-  const proof = value.proof;
-  if (!isObject(proof)) {
-    throw new X401ValidationError('x401 payload "proof" object is required.');
-  }
-  if (proof.presentation_protocol !== PRESENTATION_PROTOCOL) {
-    throw new X401ValidationError(
-      'proof.presentation_protocol must be "openid4vp".',
-    );
-  }
-  const hasDcql = proof.dcql_query !== undefined;
-  const hasScope = proof.scope !== undefined;
-  if (hasDcql === hasScope) {
-    throw new X401ValidationError(
-      "proof must contain exactly one of dcql_query or scope.",
-    );
-  }
-  if (hasScope && !isString(proof.scope)) {
-    throw new X401ValidationError("proof.scope must be a string.");
-  }
-  if (hasDcql && !isObject(proof.dcql_query)) {
-    throw new X401ValidationError("proof.dcql_query must be an object.");
-  }
-  const challenge = proof.challenge;
+  const pr = value.presentation_requirements;
   if (
-    !isObject(challenge) ||
-    !isString(challenge.value) ||
-    !isString(challenge.expires_at)
+    !isObject(pr) ||
+    !Array.isArray(pr.requests) ||
+    pr.requests.length === 0
   ) {
     throw new X401ValidationError(
-      "proof.challenge.value and proof.challenge.expires_at are required.",
+      "presentation_requirements.requests must be a non-empty array.",
     );
   }
-  const oauth = proof.oauth;
+  for (const entry of pr.requests) {
+    if (!isObject(entry)) {
+      throw new X401ValidationError(
+        "each presentation_requirements.requests entry must be an object.",
+      );
+    }
+    if (
+      !isString(entry.protocol) ||
+      !DC_API_PROTOCOLS.includes(entry.protocol)
+    ) {
+      throw new X401ValidationError(
+        `request protocol must be one of ${DC_API_PROTOCOLS.join(", ")}.`,
+      );
+    }
+    if (!isObject(entry.data)) {
+      throw new X401ValidationError("request data must be an object.");
+    }
+  }
+  const oauth = value.oauth;
   if (!isObject(oauth) || !isString(oauth.token_endpoint)) {
-    throw new X401ValidationError("proof.oauth.token_endpoint is required.");
+    throw new X401ValidationError("oauth.token_endpoint is required.");
   }
   return value as unknown as X401Payload;
 }
@@ -75,14 +73,33 @@ export function parseVPArtifact(value: unknown): VPArtifact {
   if (!isObject(value)) {
     throw new X401ValidationError("VP Artifact must be a JSON object.");
   }
-  if (!isString(value.agent_id)) {
-    throw new X401ValidationError("VP Artifact agent_id is required.");
+  const hasResponse = value.response !== undefined;
+  const hasUri = value.presentation_uri !== undefined;
+  if (hasResponse === hasUri) {
+    throw new X401ValidationError(
+      "VP Artifact must contain exactly one of response or presentation_uri.",
+    );
   }
-  if (!isString(value.challenge)) {
-    throw new X401ValidationError("VP Artifact challenge is required.");
+  if (hasResponse) {
+    const response = value.response;
+    if (
+      !isObject(response) ||
+      !isString(response.protocol) ||
+      response.data === undefined
+    ) {
+      throw new X401ValidationError(
+        "VP Artifact response must be a { protocol, data } object.",
+      );
+    }
   }
-  if (value.vp_token === undefined || value.vp_token === null) {
-    throw new X401ValidationError("VP Artifact vp_token is required.");
+  if (
+    hasUri &&
+    (!isString(value.presentation_uri) ||
+      !value.presentation_uri.startsWith("https://"))
+  ) {
+    throw new X401ValidationError(
+      "VP Artifact presentation_uri must be an https URL.",
+    );
   }
   return value as unknown as VPArtifact;
 }
@@ -93,6 +110,9 @@ export function parseX401TokenObject(value: unknown): X401TokenObject {
   }
   if (value.scheme !== X401_SCHEME) {
     throw new X401ValidationError('x401 Token Object "scheme" must be "x401".');
+  }
+  if (!isString(value.version)) {
+    throw new X401ValidationError('x401 Token Object "version" is required.');
   }
   if (value.token_type !== "Bearer") {
     throw new X401ValidationError(
@@ -113,6 +133,9 @@ export function parseX401ErrorObject(value: unknown): X401ErrorObject {
   }
   if (value.scheme !== X401_SCHEME) {
     throw new X401ValidationError('x401 Error Object "scheme" must be "x401".');
+  }
+  if (!isString(value.version)) {
+    throw new X401ValidationError('x401 Error Object "version" is required.');
   }
   if (!isString(value.error)) {
     throw new X401ValidationError("x401 Error Object error code is required.");

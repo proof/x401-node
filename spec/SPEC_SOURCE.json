@@ -1,0 +1,9 @@
+{
+  "repo": "proof/x401",
+  "ref": "c80fb9907baf8fa7158354e37d135b0f136f6715",
+  "branch": "dc-ification",
+  "version": "0.2.0",
+  "spec_url": "https://x401.proof.com/spec",
+  "schema_url": "https://x401.id/spec/schemas/request.json",
+  "fetched_at": "2026-06-23T10:19:19.399Z"
+}
