@@ -70,6 +70,11 @@ export interface X401Payload {
   request_id?: string;
   /** Stable identifiers for reusable proof requirements this proof would satisfy. Optional hint. */
   satisfied_requirements?: string[];
+  /**
+   * HTTPS URL a remote handler POSTs the presentation result to. Added by a relaying
+   * intermediary (never by the Verifier) when relaying to a remote handler.
+   */
+  return_uri?: string;
   payment?: PaymentObject;
 }
 

@@ -94,6 +94,40 @@ test("agent detects the embedded <data> requirement and it round-trips", () => {
   assert.equal(detected.payload.request_id, "proof-template-age-over-21-v1");
 });
 
+test("addReturnUri attaches an https return_uri that survives a round-trip", () => {
+  const payload = buildRequirement();
+  assert.equal("return_uri" in payload, false); // verifier never sets it
+  const relayed = agent.addReturnUri(
+    payload,
+    "https://mcp.example/x401/return/9f1c2a",
+  );
+  assert.equal(relayed.return_uri, "https://mcp.example/x401/return/9f1c2a");
+  const decoded = agent.decodePayload(verifier.encodePayload(relayed));
+  assert.equal(decoded.return_uri, "https://mcp.example/x401/return/9f1c2a");
+});
+
+test("addReturnUri rejects a non-https return_uri", () => {
+  assert.throws(
+    () => agent.addReturnUri(buildRequirement(), "http://mcp.example/return"),
+    X401ValidationError,
+  );
+});
+
+test("parseX401Payload rejects a non-https return_uri", () => {
+  const bad = Buffer.from(
+    JSON.stringify({
+      scheme: "x401",
+      version: "0.2.0",
+      presentation_requirements: {
+        requests: [{ protocol: "openid4vp-v1-signed", data: {} }],
+      },
+      oauth: { token_endpoint: "https://bank.example.com/oauth/token" },
+      return_uri: "http://mcp.example/return",
+    }),
+  ).toString("base64url");
+  assert.throws(() => agent.decodePayload(bad), X401ValidationError);
+});
+
 test("parseX401Payload rejects a leftover 0.1.0 proof wrapper", () => {
   assert.throws(
     () =>

@@ -6,7 +6,11 @@ import {
   X401_VERSION,
 } from "./constants.ts";
 import { decodeProofHeader, encodeJson } from "./encoding.ts";
-import { parseX401ErrorObject, parseX401Payload } from "./validate.ts";
+import {
+  parseX401ErrorObject,
+  parseX401Payload,
+  X401ValidationError,
+} from "./validate.ts";
 import type {
   DigitalCredentialRequest,
   PresentationResult,
@@ -112,6 +116,21 @@ export function getDigitalCredentialRequest(
   payload: X401Payload,
 ): DigitalCredentialRequest {
   return payload.presentation_requirements;
+}
+
+/**
+ * Returns a copy of the payload with `return_uri` added, for an intermediary relaying the
+ * request to a remote handler that POSTs the presentation result back. Only a relaying
+ * intermediary sets this — never the Verifier. The URL must be https.
+ */
+export function addReturnUri(
+  payload: X401Payload,
+  returnUri: string,
+): X401Payload {
+  if (!returnUri.startsWith("https://")) {
+    throw new X401ValidationError("return_uri must be an https URL.");
+  }
+  return { ...payload, return_uri: returnUri };
 }
 
 interface BuildVPArtifactInput {

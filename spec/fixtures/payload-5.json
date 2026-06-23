@@ -6,13 +6,12 @@
       {
         "protocol": "openid4vp-v1-signed",
         "data": {
-          "request": "eyJ..."
+          "request": "eyJhbGciOiJFUzI1NiIsInR5cCI6Im9hdXRoLWF1dGh6LXJlcStqd3QifQ..."
         }
       }
     ]
   },
   "oauth": {
     "token_endpoint": "https://bank.example.com/oauth/token"
-  },
-  "return_uri": "https://mcp.example/x401/return/9f1c2a"
+  }
 }

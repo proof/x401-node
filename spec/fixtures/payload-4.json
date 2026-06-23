@@ -13,5 +13,10 @@
   },
   "oauth": {
     "token_endpoint": "https://bank.example.com/oauth/token"
-  }
+  },
+  "trust_establishment": "https://bank.example.com/.well-known/x401/trust/financial-customer-v1",
+  "request_id": "proof-template-financial-customer-v1",
+  "satisfied_requirements": [
+    "urn:example:x401:satisfaction:financial-customer:v1"
+  ]
 }

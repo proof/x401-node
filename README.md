@@ -131,6 +131,11 @@ if (requirement) {
 }
 ```
 
+If you're an intermediary relaying the request to a **remote handler** (which POSTs the result
+back rather than invoking the DC API itself), add an `https` `return_uri` to the forwarded payload
+with `agent.addReturnUri(payload, returnUri)`. Only a relaying intermediary sets this — never the
+Verifier.
+
 ### Present a Proof (`PROOF-PRESENTATION`)
 
 Wrap the `{ protocol, data }` presentation result in a

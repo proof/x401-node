@@ -66,6 +66,12 @@ export function parseX401Payload(value: unknown): X401Payload {
   if (!isObject(oauth) || !isString(oauth.token_endpoint)) {
     throw new X401ValidationError("oauth.token_endpoint is required.");
   }
+  if (
+    value.return_uri !== undefined &&
+    (!isString(value.return_uri) || !value.return_uri.startsWith("https://"))
+  ) {
+    throw new X401ValidationError("return_uri must be an https URL.");
+  }
   return value as unknown as X401Payload;
 }
 

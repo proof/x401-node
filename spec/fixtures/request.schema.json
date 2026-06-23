@@ -105,6 +105,11 @@
       },
       "description": "Optional Agent-visible reuse hint: stable verifier-defined identifiers for the reusable proof requirements this proof would satisfy."
     },
+    "return_uri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional. Added by a relaying intermediary (never by the Verifier) to tell a remote handler where to POST the presentation result. See Relayed Delivery to a Remote Handler."
+    },
     "payment": {
       "type": "object",
       "description": "Informational hint that payment is additionally required. Does not replace 402 Payment Required.",

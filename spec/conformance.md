@@ -33,11 +33,16 @@ records why they are out of scope. The goal is to make "did we miss a MUST?" ans
 | Embedded `<data>`: tag `data`, `value="application/json;x401=proof-required"`, `hidden`, single JSON object that is a valid payload and MUST include a `$schema` member = `https://x401.id/spec/schemas/request.json` | `verifier.ts` `embedHtmlData`; `agent.ts` `detectProofRequirement` + `parseX401Payload`. Test: `x401.test.ts` (embedded round-trip)                                                       |
 | Embedded object subject to the same structural validation as a header payload                                                                                                                                         | `agent.ts` `detectProofRequirement` runs `parseX401Payload`. Test: `x401.test.ts`                                                                                                         |
 | Agent MUST NOT modify any entry in `presentation_requirements`                                                                                                                                                        | `agent.ts` `getDigitalCredentialRequest` returns it unmodified; library never mutates it                                                                                                  |
+| A relaying intermediary MUST add a `return_uri` member (an `https` URL) to the forwarded payload; the Verifier never sets it                                                                                          | `agent.ts` `addReturnUri` (https-validated; `buildPayload` never emits it); `validate.ts` `parseX401Payload` enforces https. Tests: `x401.test.ts`                                        |
 
 ## Out of scope — responsibility of another layer
 
 These normative statements are real but fall outside an encode/decode/validate library.
 
+- **Remote handler processing** (matching `requests[]` against held credentials, satisfying
+  `dcql_query` incl. `credential_sets`/`claim_sets`, Holder selection, producing the presentation,
+  POSTing it to `return_uri`): the remote wallet/handler. This SDK only adds and validates the
+  `return_uri` member; it does not act as a handler.
 - **Verifier proof validation & crypto** (the "The Verifier MUST:" list, Verifier Binding,
   nonce freshness/replay, dereferencing a `presentation_uri`, unique-URI issuance, issuer
   trust enforcement, `trusted_authorities`): the verifier application. This library does not
