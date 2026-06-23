@@ -48,19 +48,22 @@ const payload = verifier.buildPayload({
   presentationRequirements: {
     requests: [
       {
-        protocol: "openid4vp-v1-signed", // or "openid4vp-v1-unsigned"
-        data: { request: signedOpenId4vpRequestJwt }, // composed + signed by you
+        protocol: "openid4vp-v1-signed",
+        data: { request: signedOpenId4vpRequestJwt },
       },
     ],
   },
   oauth: { token_endpoint: "https://research.example.com/oauth/token" },
-  // optional hints:
   trustEstablishment:
     "https://research.example.com/.well-known/x401/trust/basic-v1",
   requestId: "proof-template-basic-v1",
   satisfiedRequirements: ["urn:proof:x401:satisfaction:basic:v1"],
 });
 ```
+
+`protocol` is `openid4vp-v1-signed` (RECOMMENDED) or `openid4vp-v1-unsigned`, and its `data`
+carries the request you composed and signed. `trustEstablishment`, `requestId`, and
+`satisfiedRequirements` are optional hints.
 
 Return it as a header:
 
@@ -90,12 +93,11 @@ const artifact = verifier.decodeVPArtifact(
   request.headers["proof-presentation"],
 );
 
-const result = artifact.response // inline { protocol, data }
+const result = artifact.response
   ? artifact.response
-  : await fetchPresentation(artifact.presentation_uri!); // by reference
+  : await fetchPresentation(artifact.presentation_uri!);
 
-// validate `result` with your credential library + route policy, then:
-if (!ok) {
+if (!validatePresentation(result)) {
   response.setHeader(
     "PROOF-RESPONSE",
     verifier.encodeErrorObject(
@@ -127,7 +129,7 @@ const requirement = agent.detectProofRequirement({
 
 if (requirement) {
   const dcRequest = agent.getDigitalCredentialRequest(requirement.payload);
-  // const result = await navigator.credentials.get({ digital: dcRequest });
+  const result = await navigator.credentials.get({ digital: dcRequest });
 }
 ```
 
@@ -144,18 +146,22 @@ by-reference form for results too large for a header.
 
 ```ts
 const artifact = agent.buildVPArtifact({
-  response: result, // { protocol, data } from the DC API
+  response: result,
   requestId: requirement.payload.request_id,
 });
 
-// or, by reference:
-// const artifact = agent.buildVPArtifactReference({
-//   presentationUri: "https://research.example.com/.well-known/x401/presentations/abc",
-//   expiresAt: "2026-05-06T18:50:00Z",
-// });
-
 await fetch(url, {
   headers: { "PROOF-PRESENTATION": agent.encodeVPArtifact(artifact) },
+});
+```
+
+Or, by reference:
+
+```ts
+const artifact = agent.buildVPArtifactReference({
+  presentationUri:
+    "https://research.example.com/.well-known/x401/presentations/abc",
+  expiresAt: "2026-05-06T18:50:00Z",
 });
 ```
 
