@@ -4,7 +4,7 @@ Maps the spec's RFC 2119 normative statements to where this library enforces the
 records why they are out of scope. The goal is to make "did we miss a MUST?" answerable.
 
 - **Source of truth:** `spec/spec.md` at the ref in `spec/SPEC_SOURCE.json` (currently
-  x401 **0.2.0**, proof/x401 `dc-ification`).
+  x401 **0.2.0**, proof/x401 `main` — PR #15 merged).
 - **Drift detection:** `spec/normative-ledger.json` snapshots every normative statement.
   After `node scripts/sync-spec-fixtures.ts`, run `node scripts/extract-normative.ts` to see
   what was **added/removed** since the ledger. Triage new statements here, then
@@ -52,7 +52,11 @@ These normative statements are real but fall outside an encode/decode/validate l
 - **Agent runtime / transport** (obtaining a presentation via `navigator.credentials.get`,
   relaying, remote fulfillment, retrying the route): the Agent application.
 - **OpenID4VP request composition/signing** (the JAR, `client_id`, `expected_origins`,
-  `nonce`, `dcql_query`, `exp`): the verifier; carried opaque in `data`.
+  `nonce`, `dcql_query`, `exp`): the verifier; carried opaque in `data`. This includes the
+  "Composing a Request for Both Native and Relayed Fulfillment" rules added when PR #15 merged
+  (self-contained request, `x5c`/resolvable `client_id`, carrying all inputs inside the request
+  object, transport members optional) — all verifier request-authoring concerns, not wire-object
+  structure.
 - **HTTP semantics** (status-code independence, `WWW-Authenticate` non-use, `402` payment
   separation, `Cache-Control`/`Vary`, CORS exposure): the HTTP server/deployment.
 - **Verification Token issuance, scope, binding, holder identity**; **Agent binding**
