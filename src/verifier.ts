@@ -1,6 +1,6 @@
 import {
+  DC_API_PROTOCOL,
   EMBEDDED_DATA_VALUE,
-  PRESENTATION_PROTOCOL,
   REQUEST_SCHEMA_URL,
   TOKEN_EXCHANGE_GRANT_TYPE,
   VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
@@ -14,67 +14,61 @@ import {
   X401ValidationError,
 } from "./validate.ts";
 import type {
-  DCQLQuery,
-  IssuersRef,
+  DigitalCredentialRequest,
   OAuthMetadata,
   PaymentObject,
-  VerifierChallenge,
   VPArtifact,
   X401ErrorObject,
   X401Payload,
   X401TokenObject,
 } from "./types.ts";
 
-export { createChallenge, verifyChallenge } from "./challenge.ts";
-export type { VerifyChallengeResult } from "./challenge.ts";
-
-interface BuildPayloadProof {
-  /** Verifier Challenge, typically from {@link createChallenge}. */
-  challenge: VerifierChallenge;
-  /** OAuth token-exchange metadata for the Agent. */
-  oauth: OAuthMetadata;
-  /** DCQL Credential Query Requirement. Provide exactly one of `dcql_query` or `scope`. */
-  dcql_query?: DCQLQuery;
-  /** OpenID4VP scope Credential Query Requirement. Provide exactly one of `dcql_query` or `scope`. */
-  scope?: string;
-  /** Reference to an Issuer Trust List (DIF Credential Trust Establishment document). */
-  issuers?: IssuersRef;
-  /** Stable verifier-defined identifier for the proof template. */
-  request_id?: string;
-  /** Reusable proof-requirement identifiers marked satisfied if this proof is fulfilled. */
-  satisfied_requirements?: string[];
-}
+const DC_API_PROTOCOLS: readonly string[] = Object.values(DC_API_PROTOCOL);
 
 interface BuildPayloadInput {
-  proof: BuildPayloadProof;
+  /**
+   * The Verifier-composed Digital Credentials request (a `DigitalCredentialRequestOptions`
+   * value). The caller authors and, for signed requests, signs it; x401 carries it opaque.
+   */
+  presentationRequirements: DigitalCredentialRequest;
+  /** OAuth token-exchange metadata for the Agent. */
+  oauth: OAuthMetadata;
+  /** HTTPS URL of a DIF Credential Trust Establishment document. Optional hint. */
+  trustEstablishment?: string;
+  /** Stable verifier-defined identifier for the proof template. Optional hint. */
+  requestId?: string;
+  /** Reusable proof-requirement identifiers this proof would satisfy. Optional hint. */
+  satisfiedRequirements?: string[];
   /** Informational payment hint. Does not replace 402 Payment Required. */
   payment?: PaymentObject;
 }
 
 export function buildPayload(input: BuildPayloadInput): X401Payload {
-  const { proof } = input;
-  const hasDcql = proof.dcql_query !== undefined;
-  const hasScope = proof.scope !== undefined;
-  if (hasDcql === hasScope) {
+  const requests = input.presentationRequirements.requests;
+  if (!Array.isArray(requests) || requests.length === 0) {
     throw new X401ValidationError(
-      "proof must contain exactly one of dcql_query or scope.",
+      "presentation_requirements.requests must be a non-empty array.",
     );
+  }
+  for (const entry of requests) {
+    if (!DC_API_PROTOCOLS.includes(entry.protocol)) {
+      throw new X401ValidationError(
+        `request protocol must be one of ${DC_API_PROTOCOLS.join(", ")}.`,
+      );
+    }
   }
   return {
     scheme: X401_SCHEME,
     version: X401_VERSION,
-    proof: {
-      presentation_protocol: PRESENTATION_PROTOCOL,
-      challenge: proof.challenge,
-      oauth: proof.oauth,
-      ...(proof.dcql_query !== undefined && { dcql_query: proof.dcql_query }),
-      ...(proof.scope !== undefined && { scope: proof.scope }),
-      ...(proof.issuers !== undefined && { issuers: proof.issuers }),
-      ...(proof.request_id !== undefined && { request_id: proof.request_id }),
-      ...(proof.satisfied_requirements !== undefined && {
-        satisfied_requirements: proof.satisfied_requirements,
-      }),
-    },
+    presentation_requirements: input.presentationRequirements,
+    oauth: input.oauth,
+    ...(input.trustEstablishment !== undefined && {
+      trust_establishment: input.trustEstablishment,
+    }),
+    ...(input.requestId !== undefined && { request_id: input.requestId }),
+    ...(input.satisfiedRequirements !== undefined && {
+      satisfied_requirements: input.satisfiedRequirements,
+    }),
     ...(input.payment !== undefined && { payment: input.payment }),
   };
 }
@@ -92,13 +86,10 @@ export function embedHtmlData(payload: X401Payload): string {
   return `<data value="${EMBEDDED_DATA_VALUE}" hidden>${escapeHtml(json)}</data>`;
 }
 
+// Escape only `&` and `<`; leaving quotes and `>` keeps the embedded text directly
+// readable as JSON, which the spec requires of the `<data>` content.
 function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }
 
 export function decodeVPArtifact(headerValue: string): VPArtifact {
@@ -150,10 +141,8 @@ interface BuildErrorInput {
   error_description?: string;
   /** HTTPS URL identifying documentation for the error. */
   error_uri?: string;
-  /** The proof.request_id, when the error correlates to a proof template. */
+  /** The request_id, when the error correlates to a proof template. */
   request_id?: string;
-  /** The Verifier Challenge value, when the error can be safely correlated to a challenge. */
-  challenge?: string;
 }
 
 export function buildErrorObject(input: BuildErrorInput): X401ErrorObject {
@@ -166,7 +155,6 @@ export function buildErrorObject(input: BuildErrorInput): X401ErrorObject {
     }),
     ...(input.error_uri !== undefined && { error_uri: input.error_uri }),
     ...(input.request_id !== undefined && { request_id: input.request_id }),
-    ...(input.challenge !== undefined && { challenge: input.challenge }),
   };
 }
 

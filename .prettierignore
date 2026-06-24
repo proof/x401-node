@@ -1,0 +1,4 @@
+dist
+spec/spec.md
+spec/fixtures/
+spec/normative-ledger.json

@@ -1,18 +1,22 @@
 # @proof.com/x401-node - AI Assistant Guide
 
-ESM TypeScript library implementing the x401 protocol (https://x401.proof.com/spec):
-the PROOF-REQUIRED / PROOF-PRESENTATION / PROOF-RESPONSE wire format, the Verifier Challenge,
-the VP Artifact, the x401 Token / Error objects, and the OAuth Token Exchange profile.
+ESM TypeScript library implementing the x401 protocol (https://x401.proof.com/spec, **v0.2.0**):
+the PROOF-REQUIRED / PROOF-PRESENTATION / PROOF-RESPONSE wire format, the composed Digital
+Credentials request (`presentation_requirements`), the VP Artifact (inline result or
+`presentation_uri` reference), the x401 Token / Error objects, and the OAuth Token Exchange profile.
 
 Two consumer roles, exported as namespaces:
 
-- `agent.*` — decode PROOF-REQUIRED (header or embedded `<data>`), package a wallet result as a VP
-  Artifact, encode PROOF-PRESENTATION, build a token-exchange request, decode PROOF-RESPONSE errors.
-- `verifier.*` — create/verify the Verifier Challenge, build/encode the payload, emit the embedded
-  `<data>` mirror, decode incoming VP Artifacts / Token Objects, parse token-exchange requests,
-  encode error objects.
+- `agent.*` — decode PROOF-REQUIRED (header or embedded `<data>`), read the Verifier-composed
+  `presentation_requirements`, package a presentation result as a VP Artifact (inline or by
+  reference), encode PROOF-PRESENTATION, build a token-exchange request, decode PROOF-RESPONSE errors.
+- `verifier.*` — build/encode the flat payload (carrying the caller-composed
+  `presentation_requirements`), emit the embedded `<data>` mirror, decode incoming VP Artifacts /
+  Token Objects, parse token-exchange requests, encode error objects.
 
-Plus `createEncryptor` (AES-GCM verifier-protected nonce state).
+Spec-conformance harness lives under `spec/` (pinned schema + extracted examples + normative ledger)
+and `scripts/` (`sync-spec-fixtures.ts`, `extract-normative.ts`). See `spec/UPGRADING.md` for the
+repeatable spec-upgrade loop and `spec/conformance.md` for the requirement→code map.
 
 ## Hard Rules
 
@@ -55,14 +59,12 @@ Plus `createEncryptor` (AES-GCM verifier-protected nonce state).
 
 ## Source Map
 
-- `src/constants.ts` — scheme/version, header names, schema URL, token-exchange URNs.
-- `src/types.ts` — wire-format types (no runtime code).
+- `src/constants.ts` — scheme/version (`0.2.0`), `DC_API_PROTOCOL` (signed/unsigned), header names, schema URL, token-exchange URNs.
+- `src/types.ts` — wire-format types (no runtime code): flat `X401Payload`, `DigitalCredentialRequest`, `PresentationResult`, `VPArtifact`.
 - `src/encoding.ts` — base64url JSON helpers over `@owf/identity-common`; proof-header comma guard.
 - `src/validate.ts` — structural validators / type guards (`X401ValidationError`).
-- `src/encryptor.ts` — `createEncryptor` (AES-GCM + HKDF verifier-protected nonce state; `encrypt`/`decrypt`).
-- `src/challenge.ts` — Verifier Challenge construct/verify (binds verifier id, route, method, expiry).
-- `src/agent.ts` — agent-side primitives.
-- `src/verifier.ts` — verifier-side primitives (re-exports challenge functions).
+- `src/agent.ts` — agent-side primitives (`getDigitalCredentialRequest`, `buildVPArtifact`/`buildVPArtifactReference`, …).
+- `src/verifier.ts` — verifier-side primitives (`buildPayload`, `embedHtmlData`, decoders, token-exchange parse, error builder).
 - `src/index.ts` — public barrel (explicit named exports; `agent`/`verifier` namespaces).
 
 ## Publishing

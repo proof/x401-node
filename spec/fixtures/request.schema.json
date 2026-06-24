@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://x401.id/spec/schemas/request.json",
+  "title": "x401 Proof Requirement Payload",
+  "description": "Schema for an x401 proof requirement payload as defined by the x401 specification.",
+  "type": "object",
+  "required": [
+    "scheme",
+    "version",
+    "presentation_requirements",
+    "oauth"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional informational marker. When the payload is embedded in HTML as a <data> element, this SHOULD be set to https://x401.id/spec/schemas/request.json so that content processors can recognize the object as an x401 proof requirement."
+    },
+    "scheme": {
+      "type": "string",
+      "const": "x401",
+      "description": "MUST be the string \"x401\"."
+    },
+    "version": {
+      "type": "string",
+      "description": "The x401 payload version."
+    },
+    "presentation_requirements": {
+      "type": "object",
+      "required": [
+        "requests"
+      ],
+      "description": "The composed Digital Credentials request (a DigitalCredentialRequestOptions value), usable as the digital member of navigator.credentials.get().",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Digital Credentials request entries. Every entry MUST be a valid OpenID4VP request for the DC API.",
+          "items": {
+            "type": "object",
+            "required": [
+              "protocol",
+              "data"
+            ],
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "enum": [
+                  "openid4vp-v1-signed",
+                  "openid4vp-v1-unsigned"
+                ],
+                "description": "The DC API protocol identifier. openid4vp-v1-signed is RECOMMENDED; openid4vp-v1-unsigned is permitted. See Verifier Binding."
+              },
+              "data": {
+                "type": "object",
+                "description": "Protocol-specific request data. For openid4vp-v1-signed, an object carrying the signed OpenID4VP request (e.g. { \"request\": \"<JWT>\" }); for openid4vp-v1-unsigned, the OpenID4VP request parameters directly.",
+                "properties": {
+                  "request": {
+                    "type": "string",
+                    "description": "The signed OpenID4VP request (a JWT-Secured Authorization Request); present for openid4vp-v1-signed."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "oauth": {
+      "type": "object",
+      "required": [
+        "token_endpoint"
+      ],
+      "properties": {
+        "token_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "OAuth 2.0 token endpoint where the Agent can exchange a VP Artifact for a Verification Token."
+        },
+        "audience": {
+          "type": "string",
+          "description": "Optional OAuth token exchange audience value the Agent should request."
+        },
+        "resource": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional OAuth token exchange resource value the Agent should request."
+        }
+      },
+      "additionalProperties": false
+    },
+    "trust_establishment": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional acquisition and discovery hint: HTTPS URL for a DIF Credential Trust Establishment document. Issuer enforcement is governed by the signed request (DCQL trusted_authorities), not by this member."
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Optional Agent-visible hint: a stable verifier-defined identifier for the proof template."
+    },
+    "satisfied_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional Agent-visible reuse hint: stable verifier-defined identifiers for the reusable proof requirements this proof would satisfy."
+    },
+    "return_uri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional. Added by a relaying intermediary (never by the Verifier) to tell a remote handler where to POST the presentation result. See Relayed Delivery to a Remote Handler."
+    },
+    "payment": {
+      "type": "object",
+      "description": "Informational hint that payment is additionally required. Does not replace 402 Payment Required.",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether payment is additionally required."
+        },
+        "scheme_hint": {
+          "type": "string",
+          "description": "Hint naming the expected payment protocol."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Human-readable notes."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -6,11 +6,15 @@ import {
   X401_VERSION,
 } from "./constants.ts";
 import { decodeProofHeader, encodeJson } from "./encoding.ts";
-import { parseX401ErrorObject, parseX401Payload } from "./validate.ts";
+import {
+  parseX401ErrorObject,
+  parseX401Payload,
+  X401ValidationError,
+} from "./validate.ts";
 import type {
-  DCQLQuery,
-  JsonObject,
-  JsonValue,
+  DigitalCredentialRequest,
+  PresentationResult,
+  TokenExchangeRequest,
   TokenExchangeResponse,
   VPArtifact,
   X401ErrorObject,
@@ -103,44 +107,70 @@ function decodeHtmlEntities(value: string): string {
     .replace(/&amp;/g, "&");
 }
 
-export function getNonce(payload: X401Payload): string {
-  return payload.proof.challenge.value;
+/**
+ * Returns the Verifier-composed Digital Credentials request, usable directly as the
+ * `digital` member of `navigator.credentials.get()`. x401 treats it as opaque; the
+ * Agent MUST NOT modify it.
+ */
+export function getDigitalCredentialRequest(
+  payload: X401Payload,
+): DigitalCredentialRequest {
+  return payload.presentation_requirements;
 }
 
-export function getCredentialQuery(
+/**
+ * Returns a copy of the payload with `return_uri` added, for an intermediary relaying the
+ * request to a remote handler that POSTs the presentation result back. Only a relaying
+ * intermediary sets this — never the Verifier. The URL must be https.
+ */
+export function addReturnUri(
   payload: X401Payload,
-): { scope: string } | { dcql_query: DCQLQuery } {
-  if (payload.proof.scope !== undefined) {
-    return { scope: payload.proof.scope };
+  returnUri: string,
+): X401Payload {
+  if (!returnUri.startsWith("https://")) {
+    throw new X401ValidationError("return_uri must be an https URL.");
   }
-  return { dcql_query: payload.proof.dcql_query as DCQLQuery };
+  return { ...payload, return_uri: returnUri };
 }
 
 interface BuildVPArtifactInput {
-  /** The decoded x401 payload that produced this presentation. */
-  payload: X401Payload;
-  /** Agent Identifier (the OpenID4VP client_id used with the wallet). */
-  agentId: string;
-  /** Wallet-returned presentation material. Opaque to x401 (string or object). */
-  vpToken: JsonValue;
-  /** OpenID4VP presentation submission metadata returned by the wallet, when applicable. */
-  presentationSubmission?: JsonObject;
-  /** Agent-generated correlation state returned by the wallet, when applicable. */
-  state?: string;
+  /** The `{ protocol, data }` presentation result returned by the Wallet. */
+  response: PresentationResult;
+  /** Stable verifier-defined identifier for the proof template, when correlating. */
+  requestId?: string;
+  /** Agent Identifier, when the deployment binds the Agent to the retry. */
+  agentId?: string;
 }
 
+/** Packages an inline presentation result as a VP Artifact for protected-route retry. */
 export function buildVPArtifact(input: BuildVPArtifactInput): VPArtifact {
   return {
-    agent_id: input.agentId,
-    challenge: input.payload.proof.challenge.value,
-    vp_token: input.vpToken,
-    ...(input.payload.proof.request_id !== undefined && {
-      request_id: input.payload.proof.request_id,
-    }),
-    ...(input.presentationSubmission !== undefined && {
-      presentation_submission: input.presentationSubmission,
-    }),
-    ...(input.state !== undefined && { state: input.state }),
+    response: input.response,
+    ...(input.requestId !== undefined && { request_id: input.requestId }),
+    ...(input.agentId !== undefined && { agent_id: input.agentId }),
+  };
+}
+
+interface BuildVPArtifactReferenceInput {
+  /** HTTPS URL the Verifier dereferences to fetch the presentation result. */
+  presentationUri: string;
+  /** RFC 3339 time after which the reference is no longer valid. */
+  expiresAt?: string;
+  /** Stable verifier-defined identifier for the proof template, when correlating. */
+  requestId?: string;
+  /** Agent Identifier, when the deployment binds the Agent to the retry. */
+  agentId?: string;
+}
+
+/** Packages a by-reference presentation as a VP Artifact for protected-route retry. */
+export function buildVPArtifactReference(
+  input: BuildVPArtifactReferenceInput,
+): VPArtifact {
+  return {
+    presentation_uri: input.presentationUri,
+    ...(input.expiresAt !== undefined && { expires_at: input.expiresAt }),
+    ...(input.requestId !== undefined && { request_id: input.requestId }),
+    ...(input.agentId !== undefined && { agent_id: input.agentId }),
   };
 }
 
@@ -162,9 +192,9 @@ export function encodeTokenObject(token: X401TokenObject): string {
 }
 
 interface TokenExchangeOptions {
-  /** OAuth `resource` value to request (from proof.oauth.resource or the protected URL). */
+  /** OAuth `resource` value to request (from oauth.resource or the protected URL). */
   resource?: string;
-  /** OAuth `audience` value to request (from proof.oauth.audience). */
+  /** OAuth `audience` value to request (from oauth.audience). */
   audience?: string;
 }
 
@@ -172,15 +202,16 @@ export function buildTokenExchangeForm(
   artifact: VPArtifact,
   options: TokenExchangeOptions = {},
 ): URLSearchParams {
+  const request: TokenExchangeRequest = {
+    grant_type: TOKEN_EXCHANGE_GRANT_TYPE,
+    subject_token_type: VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
+    subject_token: encodeVPArtifact(artifact),
+    ...(options.resource !== undefined && { resource: options.resource }),
+    ...(options.audience !== undefined && { audience: options.audience }),
+  };
   const form = new URLSearchParams();
-  form.set("grant_type", TOKEN_EXCHANGE_GRANT_TYPE);
-  form.set("subject_token_type", VP_ARTIFACT_SUBJECT_TOKEN_TYPE);
-  form.set("subject_token", encodeVPArtifact(artifact));
-  if (options.resource !== undefined) {
-    form.set("resource", options.resource);
-  }
-  if (options.audience !== undefined) {
-    form.set("audience", options.audience);
+  for (const [key, value] of Object.entries(request)) {
+    form.set(key, value);
   }
   return form;
 }
