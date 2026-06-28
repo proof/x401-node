@@ -25,9 +25,12 @@ function names(re: RegExp): string[] {
 }
 
 function hasRequests(p: unknown): boolean {
-  const pr = (p as { presentation_requirements?: { requests?: unknown[] } })
-    .presentation_requirements;
-  return Array.isArray(pr?.requests) && pr.requests.length > 0;
+  const digital = (
+    p as {
+      credential_requirements?: { digital?: { requests?: unknown[] } };
+    }
+  ).credential_requirements?.digital;
+  return Array.isArray(digital?.requests) && digital.requests.length > 0;
 }
 
 test("complete spec payload fixtures parse and survive an encode round-trip", () => {
@@ -51,28 +54,28 @@ test("the spec envelope skeleton is rejected by the parser", () => {
   }
 });
 
-test("spec VP Artifact fixtures (inline and by-reference) decode and round-trip", () => {
-  const arts = names(/^vp-artifact-\d+\.json$/);
+test("spec Result Artifact fixtures (inline and by-reference) decode and round-trip", () => {
+  const arts = names(/^result-artifact-\d+\.json$/);
   assert.ok(
     arts.length >= 2,
-    "expected inline and by-reference VP artifact fixtures",
+    "expected inline and by-reference Result Artifact fixtures",
   );
   let sawInline = false;
   let sawReference = false;
   for (const name of arts) {
     const raw = fixture(name) as Record<string, unknown>;
-    if (raw["response"] !== undefined) sawInline = true;
-    if (raw["presentation_uri"] !== undefined) sawReference = true;
-    const decoded = verifier.decodeVPArtifact(
-      agent.encodeVPArtifact(raw as never),
+    if (raw["credential_result"] !== undefined) sawInline = true;
+    if (raw["credential_result_uri"] !== undefined) sawReference = true;
+    const decoded = verifier.decodeResultArtifact(
+      agent.encodeResultArtifact(raw as never),
     );
     assert.deepEqual(decoded, raw, name);
   }
-  assert.ok(sawInline, "no inline VP artifact fixture found");
-  assert.ok(sawReference, "no by-reference VP artifact fixture found");
+  assert.ok(sawInline, "no inline Result Artifact fixture found");
+  assert.ok(sawReference, "no by-reference Result Artifact fixture found");
 });
 
-test("spec error object fixture decodes through PROOF-RESPONSE", () => {
+test("spec error object fixture decodes through PROOF-RESULT", () => {
   const raw = fixture("error-object.json") as Record<string, unknown>;
   const decoded = agent.decodeErrorObject(
     verifier.encodeErrorObject(raw as never),
@@ -82,7 +85,7 @@ test("spec error object fixture decodes through PROOF-RESPONSE", () => {
   assert.equal("challenge" in decoded, false);
 });
 
-test("spec token object fixture decodes through PROOF-PRESENTATION", () => {
+test("spec token object fixture decodes through PROOF-RESPONSE", () => {
   const raw = fixture("token-object.json") as Record<string, unknown>;
   const decoded = verifier.decodeTokenObject(
     agent.encodeTokenObject(raw as never),

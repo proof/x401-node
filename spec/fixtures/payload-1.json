@@ -1,9 +1,8 @@
 {
   "scheme": "x401",
   "version": "0.2.0",
-  "presentation_requirements": {},
+  "credential_requirements": {},
   "oauth": {},
-  "trust_establishment": "https://...",
   "request_id": "...",
   "satisfied_requirements": [],
   "payment": {}

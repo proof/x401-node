@@ -102,7 +102,7 @@ function main(): void {
   });
 
   let payloads = 0;
-  let vpArtifacts = 0;
+  let resultArtifacts = 0;
   let oid4vpRequests = 0;
   let schemaFound = false;
 
@@ -116,7 +116,7 @@ function main(): void {
       write("request.schema.json", obj);
       schemaFound = true;
     } else if (obj["scheme"] === "x401") {
-      if (obj["presentation_requirements"] !== undefined) {
+      if (obj["credential_requirements"] !== undefined) {
         write(`payload-${++payloads}.json`, obj);
       } else if (obj["error"] !== undefined) {
         write("error-object.json", obj);
@@ -124,10 +124,10 @@ function main(): void {
         write("token-object.json", obj);
       }
     } else if (
-      obj["response"] !== undefined ||
-      obj["presentation_uri"] !== undefined
+      obj["credential_result"] !== undefined ||
+      obj["credential_result_uri"] !== undefined
     ) {
-      write(`vp-artifact-${++vpArtifacts}.json`, obj);
+      write(`result-artifact-${++resultArtifacts}.json`, obj);
     } else if (obj["response_type"] === "vp_token") {
       // Informative: the decoded OpenID4VP request the Verifier signs into the JAR.
       write(`openid4vp-request-${++oid4vpRequests}.json`, obj);
@@ -148,7 +148,7 @@ function main(): void {
   };
   writeFileSync(SOURCE_FILE, JSON.stringify(updated, null, 2) + "\n", "utf8");
   console.log(
-    `Done. ${payloads} payload(s), ${vpArtifacts} VP artifact(s), ${oid4vpRequests} OID4VP request(s).`,
+    `Done. ${payloads} payload(s), ${resultArtifacts} result artifact(s), ${oid4vpRequests} OID4VP request(s).`,
   );
 }
 

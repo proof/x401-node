@@ -1,9 +1,9 @@
 {
   "repo": "proof/x401",
-  "ref": "4057cacc41e9e20547f6a6949946e9e1115b37d2",
+  "ref": "3f73cf912cd05a40bf8de3fe6c1f4bb720341336",
   "branch": "main",
   "version": "0.2.0",
   "spec_url": "https://x401.proof.com/spec",
   "schema_url": "https://x401.id/spec/schemas/request.json",
-  "fetched_at": "2026-06-24T08:55:14.795Z"
+  "fetched_at": "2026-06-28T22:18:28.884Z"
 }
