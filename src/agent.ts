@@ -1,6 +1,7 @@
 import {
   EMBEDDED_DATA_VALUE,
   HEADER,
+  REQUEST_SCHEMA_URL,
   RESULT_ARTIFACT_SUBJECT_TOKEN_TYPE,
   TOKEN_EXCHANGE_GRANT_TYPE,
   X401_SCHEME,
@@ -90,13 +91,30 @@ export function detectProofRequirement(
     const match = input.body.match(EMBEDDED_RE);
     if (match && match[1] !== undefined) {
       const json = decodeHtmlEntities(match[1].trim());
+      const parsed: unknown = JSON.parse(json);
+      if (!hasEmbeddedRequestSchema(parsed)) {
+        throw new X401ValidationError(
+          `embedded x401 payload "$schema" must be "${REQUEST_SCHEMA_URL}".`,
+        );
+      }
       return {
         source: "embedded",
-        payload: parseX401Payload(JSON.parse(json)),
+        payload: parseX401Payload(parsed),
       };
     }
   }
   return null;
+}
+
+function hasEmbeddedRequestSchema(
+  value: unknown,
+): value is { $schema: typeof REQUEST_SCHEMA_URL } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    (value as { $schema?: unknown }).$schema === REQUEST_SCHEMA_URL
+  );
 }
 
 function decodeHtmlEntities(value: string): string {

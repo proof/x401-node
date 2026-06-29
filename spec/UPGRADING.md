@@ -50,6 +50,10 @@ spec, not a paraphrase of it. Requires the GitHub CLI (`gh`) authenticated again
    node scripts/extract-normative.ts --update
    ```
 
+   Check prose requirements even when Appendix C allows a field to be optional. Some schema members
+   are optional for one carrier and mandatory for another. Example: `$schema` is optional for a
+   `PROOF-REQUEST` header payload, but the embedded HTML `<data>` carrier MUST include it.
+
 4. **Update the code** in dependency order:
    `src/constants.ts` → `src/types.ts` → `src/validate.ts` → `src/agent.ts` / `src/verifier.ts`
    → `src/index.ts`. Keep wire fields snake_case; carry externally-signed/opaque blobs opaque.

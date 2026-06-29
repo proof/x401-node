@@ -99,6 +99,22 @@ test("agent detects the embedded <data> requirement and it round-trips", () => {
   assert.equal(detected.payload.request_id, "proof-template-age-over-21-v1");
 });
 
+test("agent rejects an embedded <data> requirement without $schema", () => {
+  const payload = buildRequirement();
+  const html = verifier.embedHtmlData(payload);
+  const inner = html.replace(/^<data[^>]*>/, "").replace(/<\/data>$/, "");
+  const embedded = JSON.parse(inner) as Record<string, unknown>;
+  delete embedded.$schema;
+
+  assert.throws(
+    () =>
+      agent.detectProofRequirement({
+        body: `<data value="application/json;x401=proof-required" hidden>${JSON.stringify(embedded)}</data>`,
+      }),
+    /embedded x401 payload "\$schema"/,
+  );
+});
+
 test("addReturnUri attaches an https return_uri that survives a round-trip", () => {
   const payload = buildRequirement();
   assert.equal("return_uri" in payload, false);
