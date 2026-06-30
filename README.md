@@ -1,105 +1,106 @@
 # @proof.com/x401-node
 
-Node.js SDK for the [x401 protocol](https://x401.proof.com/spec) (v0.2.0).
+Node.js SDK for the [x401 protocol](https://x401.proof.com/spec/latest/) (v0.2.0).
 
-x401 gates an HTTP resource behind an identity proof requirement. The server (_verifier_) returns a
-[`PROOF-REQUIRED`](https://x401.proof.com/spec/#proof-header-fields) header carrying a composed
-[Digital Credentials API](https://www.w3.org/TR/digital-credentials/) request; the user _agent_
-obtains a presentation for that request and retries with a
-[`PROOF-PRESENTATION`](https://x401.proof.com/spec/#route-retry-headers) header. This package
-implements the data types and processing rules for both the _verifier_ and the user _agent_.
+x401 gates an HTTP resource behind an identity proof requirement. The server (Verifier) returns a
+[`PROOF-REQUEST`](https://x401.proof.com/spec/latest/#proof-header-fields) header carrying a
+composed [Digital Credentials API](https://www.w3.org/TR/digital-credentials/) request. The user
+Agent obtains a credential result for that request and retries with a
+[`PROOF-RESPONSE`](https://x401.proof.com/spec/latest/#route-retry-headers) header. The Verifier
+reports x401-specific results and errors in
+[`PROOF-RESULT`](https://x401.proof.com/spec/latest/#proof-header-fields).
 
-It does **not** verify credentials — the presentation result is opaque, so pair it with a credential
-library such as [`@proof.com/proof-vc-common`](https://www.npmjs.com/package/@proof.com/proof-vc-common).
-It also does **not** compose or sign the OpenID4VP request, nor invoke the wallet; the verifier
-authors the request (out of scope here) and this package carries it opaque in `presentation_requirements`.
+This package implements data types and wire-object processing rules for both the Verifier and the
+Agent. It does not verify credentials. Pair it with a credential verification library such as
+[`@proof.com/proof-vc-common`](https://www.npmjs.com/package/@proof.com/proof-vc-common). It also
+does not compose or sign the OpenID4VP request, nor invoke a wallet. The Verifier authors the
+request, and this package carries it opaque in `credential_requirements`.
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Verifier](#verifier)
-  - [Protect a resource (`PROOF-REQUIRED`)](#protect-a-resource-proof-required)
-  - [Verify a Proof (`PROOF-PRESENTATION`)](#verify-a-proof-proof-presentation)
+  - [Protect a resource (`PROOF-REQUEST`)](#protect-a-resource-proof-request)
+  - [Verify a result (`PROOF-RESPONSE`)](#verify-a-result-proof-response)
 - [Agent](#agent)
-  - [Read a Proof requirement (`PROOF-REQUIRED`)](#read-a-proof-requirement-proof-required)
-  - [Present a Proof (`PROOF-PRESENTATION`)](#present-a-proof-proof-presentation)
-  - [Exchange a Proof for a token](#exchange-a-proof-for-a-token)
+  - [Read a proof requirement (`PROOF-REQUEST`)](#read-a-proof-requirement-proof-request)
+  - [Present a result (`PROOF-RESPONSE`)](#present-a-result-proof-response)
+  - [Exchange a result for a token](#exchange-a-result-for-a-token)
 - [Contributing](#contributing)
 
 ## Installation
 
-```
+```sh
 npm install @proof.com/x401-node
 ```
 
 ## Verifier
 
-### Protect a resource (`PROOF-REQUIRED`)
+### Protect a resource (`PROOF-REQUEST`)
 
-The [x401 payload](https://x401.proof.com/spec/#x401-payload) carries the Verifier-composed
-[Digital Credentials request](https://x401.proof.com/spec/#presentation-requirements) and the OAuth
-token endpoint used for [token exchange](#exchange-a-proof-for-a-token). You compose and (for the
-RECOMMENDED signed mode) sign the OpenID4VP request yourself; this package carries it opaque.
+The [x401 payload](https://x401.proof.com/spec/latest/#x401-payload) carries the
+Verifier-composed credential request and the OAuth token endpoint used for
+[token exchange](#exchange-a-result-for-a-token). You compose and, for the recommended signed mode,
+sign the OpenID4VP request yourself. This package carries it opaque.
 
 ```ts
 import { verifier } from "@proof.com/x401-node";
 
 const payload = verifier.buildPayload({
-  presentationRequirements: {
-    requests: [
-      {
-        protocol: "openid4vp-v1-signed",
-        data: { request: signedOpenId4vpRequestJwt },
-      },
-    ],
+  credentialRequirements: {
+    digital: {
+      requests: [
+        {
+          protocol: "openid4vp-v1-signed",
+          data: { request: signedOpenId4vpRequestJwt },
+        },
+      ],
+    },
   },
   oauth: { token_endpoint: "https://research.example.com/oauth/token" },
-  trustEstablishment:
-    "https://research.example.com/.well-known/x401/trust/basic-v1",
   requestId: "proof-template-basic-v1",
   satisfiedRequirements: ["urn:proof:x401:satisfaction:basic:v1"],
 });
 ```
 
-`protocol` is `openid4vp-v1-signed` (RECOMMENDED) or `openid4vp-v1-unsigned`, and its `data`
-carries the request you composed and signed. `trustEstablishment`, `requestId`, and
-`satisfiedRequirements` are optional hints.
+`protocol` is `openid4vp-v1-signed` or `openid4vp-v1-unsigned`, and its `data` carries the request
+you composed and signed. `requestId` and `satisfiedRequirements` are optional hints.
 
 Return it as a header:
 
 ```ts
-response.setHeader("PROOF-REQUIRED", verifier.encodePayload(payload));
+response.setHeader("PROOF-REQUEST", verifier.encodePayload(payload));
 ```
 
 For clients that read the body but not the headers, mirror the requirement as an
-[embedded `<data>` element](https://x401.proof.com/spec/#embedded-proof-requirements-in-html-content)
-(the `$schema` marker is added automatically). The header remains authoritative and must still be set.
+[embedded `<data>` element](https://x401.proof.com/spec/latest/#embedded-proof-requirements-in-html-content).
+The `$schema` marker is added automatically. The header remains authoritative and must still be set.
 
 ```ts
-const html = `<article>…</article>${verifier.embedHtmlData(payload)}`;
+const html = `<article>...</article>${verifier.embedHtmlData(payload)}`;
 ```
 
-### Verify a Proof (`PROOF-PRESENTATION`)
+### Verify a result (`PROOF-RESPONSE`)
 
-Decode the artifact, then validate the presentation against the request you composed (binding,
-`nonce` freshness, credential query) with your credential library and route policy. The artifact may
-carry the result inline (`response`) or by reference (`presentation_uri`, which you dereference). On
-failure, return an [x401 Error Object](https://x401.proof.com/spec/#x401-error-object) in
-`PROOF-RESPONSE`. See the full
-[verifier processing rules](https://x401.proof.com/spec/#verifier-processing-rules).
+Decode the Result Artifact, then validate the credential result against the request you composed
+with your credential library and route policy. The artifact may carry the result inline
+(`credential_result`) or by reference (`credential_result_uri`, which you dereference). On failure,
+return an [x401 Error Object](https://x401.proof.com/spec/latest/#x401-error-object) in
+`PROOF-RESULT`. See the full
+[Verifier processing rules](https://x401.proof.com/spec/latest/#verifier-processing-rules).
 
 ```ts
-const artifact = verifier.decodeVPArtifact(
-  request.headers["proof-presentation"],
+const artifact = verifier.decodeResultArtifact(
+  request.headers["proof-response"],
 );
 
-const result = artifact.response
-  ? artifact.response
-  : await fetchPresentation(artifact.presentation_uri!);
+const result = artifact.credential_result
+  ? artifact.credential_result
+  : await fetchCredentialResult(artifact.credential_result_uri!);
 
-if (!validatePresentation(result)) {
+if (!validateCredentialResult(result)) {
   response.setHeader(
-    "PROOF-RESPONSE",
+    "PROOF-RESULT",
     verifier.encodeErrorObject(
       verifier.buildErrorObject({ error: "invalid_presentation" }),
     ),
@@ -110,13 +111,13 @@ if (!validatePresentation(result)) {
 
 ## Agent
 
-See the full [agent processing rules](https://x401.proof.com/spec/#agent-processing-rules).
+See the full [Agent processing rules](https://x401.proof.com/spec/latest/#agent-processing-rules).
 
-### Read a Proof requirement (`PROOF-REQUIRED`)
+### Read a proof requirement (`PROOF-REQUEST`)
 
 `detectProofRequirement` reads the header, falling back to the embedded `<data>` element.
-`getDigitalCredentialRequest` returns the Verifier-composed request unmodified — pass it straight to
-the Digital Credentials API (or relay it). The agent MUST NOT alter it.
+`getCredentialRequestOptions` returns the Verifier-composed credential request unmodified. Pass it
+straight to the Credential Manager, or relay it. The Agent must not alter it.
 
 ```ts
 import { agent } from "@proof.com/x401-node";
@@ -128,48 +129,49 @@ const requirement = agent.detectProofRequirement({
 });
 
 if (requirement) {
-  const dcRequest = agent.getDigitalCredentialRequest(requirement.payload);
-  const result = await navigator.credentials.get({ digital: dcRequest });
+  const credentialRequest = agent.getCredentialRequestOptions(
+    requirement.payload,
+  );
+  const result = await navigator.credentials.get(credentialRequest);
 }
 ```
 
-If you're an intermediary relaying the request to a **remote handler** (which POSTs the result
-back rather than invoking the DC API itself), add an `https` `return_uri` to the forwarded payload
-with `agent.addReturnUri(payload, returnUri)`. Only a relaying intermediary sets this — never the
-Verifier.
+If you are an intermediary relaying the request to a remote handler, add an `https` `return_uri` to
+the forwarded payload with `agent.addReturnUri(payload, returnUri)`. Only a relaying intermediary
+sets this. The Verifier never sets it.
 
-### Present a Proof (`PROOF-PRESENTATION`)
+### Present a result (`PROOF-RESPONSE`)
 
-Wrap the `{ protocol, data }` presentation result in a
-[VP Artifact](https://x401.proof.com/spec/#vp-artifact) and retry the same route. Use the
-by-reference form for results too large for a header.
+Wrap the `{ protocol, data }` credential result in a
+[Result Artifact](https://x401.proof.com/spec/latest/#result-artifact) and retry the same route. Use
+the by-reference form for results too large for a header.
 
 ```ts
-const artifact = agent.buildVPArtifact({
-  response: result,
+const artifact = agent.buildResultArtifact({
+  credentialResult: result,
   requestId: requirement.payload.request_id,
 });
 
 await fetch(url, {
-  headers: { "PROOF-PRESENTATION": agent.encodeVPArtifact(artifact) },
+  headers: { "PROOF-RESPONSE": agent.encodeResultArtifact(artifact) },
 });
 ```
 
 Or, by reference:
 
 ```ts
-const artifact = agent.buildVPArtifactReference({
-  presentationUri:
-    "https://research.example.com/.well-known/x401/presentations/abc",
+const artifact = agent.buildResultArtifactReference({
+  credentialResultUri:
+    "https://research.example.com/.well-known/x401/results/abc",
   expiresAt: "2026-05-06T18:50:00Z",
 });
 ```
 
-### Exchange a Proof for a token
+### Exchange a result for a token
 
 Exchange the artifact for a reusable Verification Token via
-[OAuth token exchange](https://x401.proof.com/spec/#oauth-token-exchange), then present it as an
-x401 Token Object.
+[OAuth token exchange](https://x401.proof.com/spec/latest/#oauth-token-exchange), then present it as
+an x401 Token Object.
 
 ```ts
 const form = agent.buildTokenExchangeForm(artifact, { resource: url });
@@ -183,7 +185,7 @@ const { access_token } = agent.parseTokenExchangeResponse(await res.json());
 const tokenHeader = agent.encodeTokenObject(
   agent.buildTokenObject(access_token),
 );
-await fetch(url, { headers: { "PROOF-PRESENTATION": tokenHeader } });
+await fetch(url, { headers: { "PROOF-RESPONSE": tokenHeader } });
 ```
 
 ## Contributing

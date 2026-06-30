@@ -7,12 +7,14 @@ export {
   ACCESS_TOKEN_TYPE,
   DC_API_PROTOCOL,
   HEADER,
+  RESULT_ARTIFACT_SUBJECT_TOKEN_TYPE,
   TOKEN_EXCHANGE_GRANT_TYPE,
-  VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
   X401_VERSION,
 } from "./constants.ts";
 
 export type {
+  CredentialRequestOptions,
+  CredentialResult,
   DCApiProtocol,
   DigitalCredentialRequest,
   DigitalCredentialRequestEntry,
@@ -20,10 +22,9 @@ export type {
   JsonValue,
   OAuthMetadata,
   PaymentObject,
-  PresentationResult,
+  ResultArtifact,
   TokenExchangeRequest,
   TokenExchangeResponse,
-  VPArtifact,
   X401ErrorObject,
   X401Payload,
   X401TokenObject,

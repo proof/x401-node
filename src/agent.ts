@@ -1,7 +1,9 @@
 import {
   EMBEDDED_DATA_VALUE,
+  HEADER,
+  REQUEST_SCHEMA_URL,
+  RESULT_ARTIFACT_SUBJECT_TOKEN_TYPE,
   TOKEN_EXCHANGE_GRANT_TYPE,
-  VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
   X401_SCHEME,
   X401_VERSION,
 } from "./constants.ts";
@@ -12,11 +14,12 @@ import {
   X401ValidationError,
 } from "./validate.ts";
 import type {
+  CredentialRequestOptions,
+  CredentialResult,
   DigitalCredentialRequest,
-  PresentationResult,
+  ResultArtifact,
   TokenExchangeRequest,
   TokenExchangeResponse,
-  VPArtifact,
   X401ErrorObject,
   X401Payload,
   X401TokenObject,
@@ -79,7 +82,7 @@ export function detectProofRequirement(
   input: DetectInput,
 ): ProofRequirement | null {
   if (input.headers !== undefined) {
-    const headerValue = getHeader(input.headers, "PROOF-REQUIRED");
+    const headerValue = getHeader(input.headers, HEADER.PROOF_REQUEST);
     if (headerValue) {
       return { source: "header", payload: decodePayload(headerValue) };
     }
@@ -88,13 +91,30 @@ export function detectProofRequirement(
     const match = input.body.match(EMBEDDED_RE);
     if (match && match[1] !== undefined) {
       const json = decodeHtmlEntities(match[1].trim());
+      const parsed: unknown = JSON.parse(json);
+      if (!hasEmbeddedRequestSchema(parsed)) {
+        throw new X401ValidationError(
+          `embedded x401 payload "$schema" must be "${REQUEST_SCHEMA_URL}".`,
+        );
+      }
       return {
         source: "embedded",
-        payload: parseX401Payload(JSON.parse(json)),
+        payload: parseX401Payload(parsed),
       };
     }
   }
   return null;
+}
+
+function hasEmbeddedRequestSchema(
+  value: unknown,
+): value is { $schema: typeof REQUEST_SCHEMA_URL } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    (value as { $schema?: unknown }).$schema === REQUEST_SCHEMA_URL
+  );
 }
 
 function decodeHtmlEntities(value: string): string {
@@ -108,20 +128,29 @@ function decodeHtmlEntities(value: string): string {
 }
 
 /**
- * Returns the Verifier-composed Digital Credentials request, usable directly as the
- * `digital` member of `navigator.credentials.get()`. x401 treats it as opaque; the
+ * Returns the Verifier-composed credential request, usable directly as the
+ * argument to `navigator.credentials.get()`. x401 treats it as opaque; the
  * Agent MUST NOT modify it.
+ */
+export function getCredentialRequestOptions(
+  payload: X401Payload,
+): CredentialRequestOptions {
+  return payload.credential_requirements;
+}
+
+/**
+ * Returns the `digital` member of the Verifier-composed credential request.
  */
 export function getDigitalCredentialRequest(
   payload: X401Payload,
 ): DigitalCredentialRequest {
-  return payload.presentation_requirements;
+  return payload.credential_requirements.digital;
 }
 
 /**
  * Returns a copy of the payload with `return_uri` added, for an intermediary relaying the
- * request to a remote handler that POSTs the presentation result back. Only a relaying
- * intermediary sets this — never the Verifier. The URL must be https.
+ * request to a remote handler that POSTs the credential result back. Only a relaying
+ * intermediary sets this; never the Verifier. The URL must be https.
  */
 export function addReturnUri(
   payload: X401Payload,
@@ -133,27 +162,29 @@ export function addReturnUri(
   return { ...payload, return_uri: returnUri };
 }
 
-interface BuildVPArtifactInput {
-  /** The `{ protocol, data }` presentation result returned by the Wallet. */
-  response: PresentationResult;
+interface BuildResultArtifactInput {
+  /** The `{ protocol, data }` credential result returned by the Credential Manager. */
+  credentialResult: CredentialResult;
   /** Stable verifier-defined identifier for the proof template, when correlating. */
   requestId?: string;
   /** Agent Identifier, when the deployment binds the Agent to the retry. */
   agentId?: string;
 }
 
-/** Packages an inline presentation result as a VP Artifact for protected-route retry. */
-export function buildVPArtifact(input: BuildVPArtifactInput): VPArtifact {
+/** Packages an inline credential result as a Result Artifact for protected-route retry. */
+export function buildResultArtifact(
+  input: BuildResultArtifactInput,
+): ResultArtifact {
   return {
-    response: input.response,
+    credential_result: input.credentialResult,
     ...(input.requestId !== undefined && { request_id: input.requestId }),
     ...(input.agentId !== undefined && { agent_id: input.agentId }),
   };
 }
 
-interface BuildVPArtifactReferenceInput {
-  /** HTTPS URL the Verifier dereferences to fetch the presentation result. */
-  presentationUri: string;
+interface BuildResultArtifactReferenceInput {
+  /** HTTPS URL the Verifier dereferences to fetch the credential result. */
+  credentialResultUri: string;
   /** RFC 3339 time after which the reference is no longer valid. */
   expiresAt?: string;
   /** Stable verifier-defined identifier for the proof template, when correlating. */
@@ -162,19 +193,19 @@ interface BuildVPArtifactReferenceInput {
   agentId?: string;
 }
 
-/** Packages a by-reference presentation as a VP Artifact for protected-route retry. */
-export function buildVPArtifactReference(
-  input: BuildVPArtifactReferenceInput,
-): VPArtifact {
+/** Packages a by-reference credential result as a Result Artifact for protected-route retry. */
+export function buildResultArtifactReference(
+  input: BuildResultArtifactReferenceInput,
+): ResultArtifact {
   return {
-    presentation_uri: input.presentationUri,
+    credential_result_uri: input.credentialResultUri,
     ...(input.expiresAt !== undefined && { expires_at: input.expiresAt }),
     ...(input.requestId !== undefined && { request_id: input.requestId }),
     ...(input.agentId !== undefined && { agent_id: input.agentId }),
   };
 }
 
-export function encodeVPArtifact(artifact: VPArtifact): string {
+export function encodeResultArtifact(artifact: ResultArtifact): string {
   return encodeJson(artifact);
 }
 
@@ -199,13 +230,13 @@ interface TokenExchangeOptions {
 }
 
 export function buildTokenExchangeForm(
-  artifact: VPArtifact,
+  artifact: ResultArtifact,
   options: TokenExchangeOptions = {},
 ): URLSearchParams {
   const request: TokenExchangeRequest = {
     grant_type: TOKEN_EXCHANGE_GRANT_TYPE,
-    subject_token_type: VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
-    subject_token: encodeVPArtifact(artifact),
+    subject_token_type: RESULT_ARTIFACT_SUBJECT_TOKEN_TYPE,
+    subject_token: encodeResultArtifact(artifact),
     ...(options.resource !== undefined && { resource: options.resource }),
     ...(options.audience !== undefined && { audience: options.audience }),
   };

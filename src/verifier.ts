@@ -2,22 +2,22 @@ import {
   DC_API_PROTOCOL,
   EMBEDDED_DATA_VALUE,
   REQUEST_SCHEMA_URL,
+  RESULT_ARTIFACT_SUBJECT_TOKEN_TYPE,
   TOKEN_EXCHANGE_GRANT_TYPE,
-  VP_ARTIFACT_SUBJECT_TOKEN_TYPE,
   X401_SCHEME,
   X401_VERSION,
 } from "./constants.ts";
 import { decodeProofHeader, encodeJson } from "./encoding.ts";
 import {
-  parseVPArtifact,
+  parseResultArtifact,
   parseX401TokenObject,
   X401ValidationError,
 } from "./validate.ts";
 import type {
-  DigitalCredentialRequest,
+  CredentialRequestOptions,
   OAuthMetadata,
   PaymentObject,
-  VPArtifact,
+  ResultArtifact,
   X401ErrorObject,
   X401Payload,
   X401TokenObject,
@@ -27,14 +27,13 @@ const DC_API_PROTOCOLS: readonly string[] = Object.values(DC_API_PROTOCOL);
 
 interface BuildPayloadInput {
   /**
-   * The Verifier-composed Digital Credentials request (a `DigitalCredentialRequestOptions`
-   * value). The caller authors and, for signed requests, signs it; x401 carries it opaque.
+   * The Verifier-composed credential request, usable directly as the argument
+   * to `navigator.credentials.get()`. This version of x401 specifies its
+   * `digital` member.
    */
-  presentationRequirements: DigitalCredentialRequest;
+  credentialRequirements: CredentialRequestOptions;
   /** OAuth token-exchange metadata for the Agent. */
   oauth: OAuthMetadata;
-  /** HTTPS URL of a DIF Credential Trust Establishment document. Optional hint. */
-  trustEstablishment?: string;
   /** Stable verifier-defined identifier for the proof template. Optional hint. */
   requestId?: string;
   /** Reusable proof-requirement identifiers this proof would satisfy. Optional hint. */
@@ -44,10 +43,10 @@ interface BuildPayloadInput {
 }
 
 export function buildPayload(input: BuildPayloadInput): X401Payload {
-  const requests = input.presentationRequirements.requests;
+  const requests = input.credentialRequirements.digital.requests;
   if (!Array.isArray(requests) || requests.length === 0) {
     throw new X401ValidationError(
-      "presentation_requirements.requests must be a non-empty array.",
+      "credential_requirements.digital.requests must be a non-empty array.",
     );
   }
   for (const entry of requests) {
@@ -60,11 +59,8 @@ export function buildPayload(input: BuildPayloadInput): X401Payload {
   return {
     scheme: X401_SCHEME,
     version: X401_VERSION,
-    presentation_requirements: input.presentationRequirements,
+    credential_requirements: input.credentialRequirements,
     oauth: input.oauth,
-    ...(input.trustEstablishment !== undefined && {
-      trust_establishment: input.trustEstablishment,
-    }),
     ...(input.requestId !== undefined && { request_id: input.requestId }),
     ...(input.satisfiedRequirements !== undefined && {
       satisfied_requirements: input.satisfiedRequirements,
@@ -92,8 +88,8 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }
 
-export function decodeVPArtifact(headerValue: string): VPArtifact {
-  return parseVPArtifact(decodeProofHeader(headerValue));
+export function decodeResultArtifact(headerValue: string): ResultArtifact {
+  return parseResultArtifact(decodeProofHeader(headerValue));
 }
 
 export function decodeTokenObject(headerValue: string): X401TokenObject {
@@ -116,7 +112,7 @@ export function parseTokenExchange(
       "unsupported grant_type for x401 token exchange.",
     );
   }
-  if (get("subject_token_type") !== VP_ARTIFACT_SUBJECT_TOKEN_TYPE) {
+  if (get("subject_token_type") !== RESULT_ARTIFACT_SUBJECT_TOKEN_TYPE) {
     throw new X401ValidationError(
       "unsupported subject_token_type for x401 token exchange.",
     );

@@ -1,7 +1,7 @@
 {
   "request_id": "proof-template-financial-customer-v1",
-  "response": {
+  "credential_result": {
     "protocol": "openid4vp-v1-signed",
-    "data": "<wallet-returned-presentation-result>"
+    "data": "<credential-manager-returned-result>"
   }
 }
