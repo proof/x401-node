@@ -1,5 +1,5 @@
 {
   "request_id": "proof-template-financial-customer-v1",
-  "presentation_uri": "https://bank.example.com/.well-known/x401/presentations/abc123",
+  "credential_result_uri": "https://bank.example.com/.well-known/x401/results/abc123",
   "expires_at": "2026-05-06T18:50:00Z"
 }

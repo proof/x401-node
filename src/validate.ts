@@ -1,7 +1,7 @@
 import { DC_API_PROTOCOL, X401_SCHEME } from "./constants.ts";
 import type {
   JsonObject,
-  VPArtifact,
+  ResultArtifact,
   X401ErrorObject,
   X401Payload,
   X401TokenObject,
@@ -34,20 +34,23 @@ export function parseX401Payload(value: unknown): X401Payload {
   if (!isString(value.version)) {
     throw new X401ValidationError('x401 payload "version" is required.');
   }
-  const pr = value.presentation_requirements;
+  const credentialRequirements = value.credential_requirements;
+  const digital = isObject(credentialRequirements)
+    ? credentialRequirements.digital
+    : undefined;
   if (
-    !isObject(pr) ||
-    !Array.isArray(pr.requests) ||
-    pr.requests.length === 0
+    !isObject(digital) ||
+    !Array.isArray(digital.requests) ||
+    digital.requests.length === 0
   ) {
     throw new X401ValidationError(
-      "presentation_requirements.requests must be a non-empty array.",
+      "credential_requirements.digital.requests must be a non-empty array.",
     );
   }
-  for (const entry of pr.requests) {
+  for (const entry of digital.requests) {
     if (!isObject(entry)) {
       throw new X401ValidationError(
-        "each presentation_requirements.requests entry must be an object.",
+        "each credential_requirements.digital.requests entry must be an object.",
       );
     }
     if (
@@ -75,39 +78,39 @@ export function parseX401Payload(value: unknown): X401Payload {
   return value as unknown as X401Payload;
 }
 
-export function parseVPArtifact(value: unknown): VPArtifact {
+export function parseResultArtifact(value: unknown): ResultArtifact {
   if (!isObject(value)) {
-    throw new X401ValidationError("VP Artifact must be a JSON object.");
+    throw new X401ValidationError("Result Artifact must be a JSON object.");
   }
-  const hasResponse = value.response !== undefined;
-  const hasUri = value.presentation_uri !== undefined;
-  if (hasResponse === hasUri) {
+  const hasResult = value.credential_result !== undefined;
+  const hasUri = value.credential_result_uri !== undefined;
+  if (hasResult === hasUri) {
     throw new X401ValidationError(
-      "VP Artifact must contain exactly one of response or presentation_uri.",
+      "Result Artifact must contain exactly one of credential_result or credential_result_uri.",
     );
   }
-  if (hasResponse) {
-    const response = value.response;
+  if (hasResult) {
+    const result = value.credential_result;
     if (
-      !isObject(response) ||
-      !isString(response.protocol) ||
-      response.data === undefined
+      !isObject(result) ||
+      !isString(result.protocol) ||
+      result.data === undefined
     ) {
       throw new X401ValidationError(
-        "VP Artifact response must be a { protocol, data } object.",
+        "Result Artifact credential_result must be a { protocol, data } object.",
       );
     }
   }
   if (
     hasUri &&
-    (!isString(value.presentation_uri) ||
-      !value.presentation_uri.startsWith("https://"))
+    (!isString(value.credential_result_uri) ||
+      !value.credential_result_uri.startsWith("https://"))
   ) {
     throw new X401ValidationError(
-      "VP Artifact presentation_uri must be an https URL.",
+      "Result Artifact credential_result_uri must be an https URL.",
     );
   }
-  return value as unknown as VPArtifact;
+  return value as unknown as ResultArtifact;
 }
 
 export function parseX401TokenObject(value: unknown): X401TokenObject {

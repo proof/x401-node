@@ -1,7 +1,7 @@
 {
   "scheme": "x401",
   "version": "0.2.0",
-  "error": "invalid_presentation",
-  "error_description": "The presentation did not satisfy the route proof requirement.",
+  "error": "invalid_result",
+  "error_description": "The credential result did not satisfy the route proof requirement.",
   "request_id": "proof-template-financial-customer-v1"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@proof.com/x401-node",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Node.js SDK for the x401 protocol.",
   "keywords": [
     "x401",
@@ -39,6 +39,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
+    "prepare": "npm run build",
     "publint": "publint --pack npm",
     "test": "node --test tests/*.test.ts",
     "typecheck": "tsc --noEmit"

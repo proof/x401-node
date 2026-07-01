@@ -7,7 +7,7 @@
   "required": [
     "scheme",
     "version",
-    "presentation_requirements",
+    "credential_requirements",
     "oauth"
   ],
   "properties": {
@@ -25,39 +25,48 @@
       "type": "string",
       "description": "The x401 payload version."
     },
-    "presentation_requirements": {
+    "credential_requirements": {
       "type": "object",
       "required": [
-        "requests"
+        "digital"
       ],
-      "description": "The composed Digital Credentials request (a DigitalCredentialRequestOptions value), usable as the digital member of navigator.credentials.get().",
+      "description": "The Verifier-composed credential request, a CredentialRequestOptions value usable as the argument to navigator.credentials.get(). This version of x401 specifies the digital member; additional navigator.credentials.get() request types (e.g. publicKey) may be specified in future versions.",
       "properties": {
-        "requests": {
-          "type": "array",
-          "minItems": 1,
-          "description": "Digital Credentials request entries. Every entry MUST be a valid OpenID4VP request for the DC API.",
-          "items": {
-            "type": "object",
-            "required": [
-              "protocol",
-              "data"
-            ],
-            "properties": {
-              "protocol": {
-                "type": "string",
-                "enum": [
-                  "openid4vp-v1-signed",
-                  "openid4vp-v1-unsigned"
-                ],
-                "description": "The DC API protocol identifier. openid4vp-v1-signed is RECOMMENDED; openid4vp-v1-unsigned is permitted. See Verifier Binding."
-              },
-              "data": {
+        "digital": {
+          "type": "object",
+          "required": [
+            "requests"
+          ],
+          "description": "The composed Digital Credentials request, a DigitalCredentialRequestOptions value (the value the digital member of navigator.credentials.get() takes).",
+          "properties": {
+            "requests": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Digital Credentials request entries. Every entry MUST be a valid OpenID4VP request for the DC API.",
+              "items": {
                 "type": "object",
-                "description": "Protocol-specific request data. For openid4vp-v1-signed, an object carrying the signed OpenID4VP request (e.g. { \"request\": \"<JWT>\" }); for openid4vp-v1-unsigned, the OpenID4VP request parameters directly.",
+                "required": [
+                  "protocol",
+                  "data"
+                ],
                 "properties": {
-                  "request": {
+                  "protocol": {
                     "type": "string",
-                    "description": "The signed OpenID4VP request (a JWT-Secured Authorization Request); present for openid4vp-v1-signed."
+                    "enum": [
+                      "openid4vp-v1-signed",
+                      "openid4vp-v1-unsigned"
+                    ],
+                    "description": "The DC API protocol identifier. openid4vp-v1-signed is RECOMMENDED; openid4vp-v1-unsigned is permitted. See Verifier Binding."
+                  },
+                  "data": {
+                    "type": "object",
+                    "description": "Protocol-specific request data. For openid4vp-v1-signed, an object carrying the signed OpenID4VP request (e.g. { \"request\": \"<JWT>\" }); for openid4vp-v1-unsigned, the OpenID4VP request parameters directly.",
+                    "properties": {
+                      "request": {
+                        "type": "string",
+                        "description": "The signed OpenID4VP request (a JWT-Secured Authorization Request); present for openid4vp-v1-signed."
+                      }
+                    }
                   }
                 }
               }
@@ -75,7 +84,7 @@
         "token_endpoint": {
           "type": "string",
           "format": "uri",
-          "description": "OAuth 2.0 token endpoint where the Agent can exchange a VP Artifact for a Verification Token."
+          "description": "OAuth 2.0 token endpoint where the Agent can exchange a Result Artifact for a Verification Token."
         },
         "audience": {
           "type": "string",
@@ -88,11 +97,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "trust_establishment": {
-      "type": "string",
-      "format": "uri",
-      "description": "Optional acquisition and discovery hint: HTTPS URL for a DIF Credential Trust Establishment document. Issuer enforcement is governed by the signed request (DCQL trusted_authorities), not by this member."
     },
     "request_id": {
       "type": "string",
@@ -108,7 +112,7 @@
     "return_uri": {
       "type": "string",
       "format": "uri",
-      "description": "Optional. Added by a relaying intermediary (never by the Verifier) to tell a remote handler where to POST the presentation result. See Relayed Delivery to a Remote Handler."
+      "description": "Optional. Added by a relaying intermediary (never by the Verifier) to tell a remote handler where to POST the credential result. See Relayed Delivery to a Remote Handler."
     },
     "payment": {
       "type": "object",
