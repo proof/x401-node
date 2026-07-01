@@ -31,7 +31,12 @@ repeatable spec-upgrade loop and `spec/conformance.md` for the requirement→cod
    publish workflow without explicit confirmation. Publishes are permanent.
 5. **Run `yarn check-all` and `yarn test` before any commit or push.**
 6. **Keep `yarn publint` on `--pack npm`.**
-7. **Don't lower `engines.node` below `>=22.0.0`.**
+7. **Keep `engines.node` at `>=22.0.0` and keep the CI `test-matrix` covering it.** This is the
+   consumer runtime floor; consumers run the compiled `dist`, which uses only long-stable globals
+   (`URL`/`URLSearchParams`) and runs on any maintained LTS. Dev and CI use Node 24 (`.node-version`,
+   active LTS). The `test-matrix` job runs `yarn test` on Node 22 and 24; the 22 leg resolves to the
+   latest 22.x because the native `.ts` test runner needs default type stripping (Node >=22.18), so
+   never pin the matrix low leg below that. Don't raise the consumer floor to match the dev pin.
 8. **Never use `eslint-disable`, `@ts-ignore`, or `@ts-expect-error` as a workaround.** Fix the
    underlying code or surface the rule to the user for a config decision.
 
@@ -56,6 +61,12 @@ repeatable spec-upgrade loop and `spec/conformance.md` for the requirement→cod
 | `yarn lint`      | `eslint --fix`                                     |
 | `yarn format`    | `prettier --write`                                 |
 | `yarn publint`   | `publint --pack npm` (keep the flag)               |
+
+## Tooling (Yarn 4)
+
+- Yarn is pinned via `packageManager: yarn@4.17.0` (`.yarn/releases/yarn-4.17.0.cjs`). Run `corepack enable` so the project yarn is used; CI does the same.
+- `.yarnrc.yml` config: `nodeLinker: node-modules`, immutable installs (`enableImmutableInstalls: true` - no `--frozen-lockfile` needed), `enableScripts: false` (no postinstall scripts - a dep needing a build step at install won't run it), `npmMinimalAgeGate: 1w` (deps published <1 week ago won't install; matches the dependabot 7-day cooldown).
+- `yarn.lock` is the only lockfile.
 
 ## Source Map
 
@@ -105,5 +116,4 @@ Never `git push --follow-tags` to `main`: the commit is rejected but the tag sti
 
 ## Notes
 
-- `yarn.lock` is the only lockfile (no `package-lock.json`).
 - Scope is `@proof.com` (with the dot), not `@proof`.
