@@ -7,9 +7,7 @@ import type {
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
-  | JsonPrimitive
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+  JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 export type JsonObject = { [key: string]: JsonValue };
 
 /** Digital Credentials API protocol identifier for a request entry. */
