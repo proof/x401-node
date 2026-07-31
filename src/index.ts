@@ -2,6 +2,7 @@ export * as agent from "./agent.ts";
 export * as verifier from "./verifier.ts";
 
 export { X401ValidationError } from "./validate.ts";
+export type { ReturnUriOptions } from "./validate.ts";
 
 export {
   ACCESS_TOKEN_TYPE,

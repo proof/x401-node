@@ -24,7 +24,35 @@ function isString(value: unknown): value is string {
 
 const DC_API_PROTOCOLS: readonly string[] = Object.values(DC_API_PROTOCOL);
 
-export function parseX401Payload(value: unknown): X401Payload {
+export interface ReturnUriOptions {
+  /**
+   * Skip the https requirement on `return_uri`, permitting an http URL (e.g. a
+   * `http://localhost` dev transport). Defaults to false.
+   */
+  allowInsecureUri?: boolean;
+}
+
+/**
+ * Asserts `return_uri` is a string and, unless `allowInsecureUri` is set, an
+ * https URL. Shared by the intermediary that adds it and the recipient that
+ * decodes it so both sides apply the same rule.
+ */
+export function assertReturnUri(
+  returnUri: unknown,
+  options?: ReturnUriOptions,
+): void {
+  if (
+    !isString(returnUri) ||
+    (!options?.allowInsecureUri && !returnUri.startsWith("https://"))
+  ) {
+    throw new X401ValidationError("return_uri must be an https URL.");
+  }
+}
+
+export function parseX401Payload(
+  value: unknown,
+  options?: ReturnUriOptions,
+): X401Payload {
   if (!isObject(value)) {
     throw new X401ValidationError("x401 payload must be a JSON object.");
   }
@@ -69,11 +97,8 @@ export function parseX401Payload(value: unknown): X401Payload {
   if (!isObject(oauth) || !isString(oauth.token_endpoint)) {
     throw new X401ValidationError("oauth.token_endpoint is required.");
   }
-  if (
-    value.return_uri !== undefined &&
-    (!isString(value.return_uri) || !value.return_uri.startsWith("https://"))
-  ) {
-    throw new X401ValidationError("return_uri must be an https URL.");
+  if (value.return_uri !== undefined) {
+    assertReturnUri(value.return_uri, options);
   }
   return value as unknown as X401Payload;
 }
