@@ -9,10 +9,12 @@ import {
 } from "./constants.ts";
 import { decodeProofHeader, encodeJson } from "./encoding.ts";
 import {
+  assertReturnUri,
   parseX401ErrorObject,
   parseX401Payload,
   X401ValidationError,
 } from "./validate.ts";
+import type { ReturnUriOptions } from "./validate.ts";
 import type {
   CredentialRequestOptions,
   CredentialResult,
@@ -53,8 +55,11 @@ function getHeader(headers: HeadersInput, name: string): string | undefined {
   return undefined;
 }
 
-export function decodePayload(headerValue: string): X401Payload {
-  return parseX401Payload(decodeProofHeader(headerValue));
+export function decodePayload(
+  headerValue: string,
+  options?: ReturnUriOptions,
+): X401Payload {
+  return parseX401Payload(decodeProofHeader(headerValue), options);
 }
 
 export function decodeErrorObject(headerValue: string): X401ErrorObject {
@@ -80,11 +85,12 @@ const EMBEDDED_RE = new RegExp(
 
 export function detectProofRequirement(
   input: DetectInput,
+  options?: ReturnUriOptions,
 ): ProofRequirement | null {
   if (input.headers !== undefined) {
     const headerValue = getHeader(input.headers, HEADER.PROOF_REQUEST);
     if (headerValue) {
-      return { source: "header", payload: decodePayload(headerValue) };
+      return { source: "header", payload: decodePayload(headerValue, options) };
     }
   }
   if (input.body) {
@@ -99,7 +105,7 @@ export function detectProofRequirement(
       }
       return {
         source: "embedded",
-        payload: parseX401Payload(parsed),
+        payload: parseX401Payload(parsed, options),
       };
     }
   }
@@ -150,15 +156,15 @@ export function getDigitalCredentialRequest(
 /**
  * Returns a copy of the payload with `return_uri` added, for an intermediary relaying the
  * request to a remote handler that POSTs the credential result back. Only a relaying
- * intermediary sets this; never the Verifier. The URL must be https.
+ * intermediary sets this; never the Verifier. The URL must be https, unless the
+ * caller opts in to an insecure URL via `options.allowInsecureUri`.
  */
 export function addReturnUri(
   payload: X401Payload,
   returnUri: string,
+  options?: ReturnUriOptions,
 ): X401Payload {
-  if (!returnUri.startsWith("https://")) {
-    throw new X401ValidationError("return_uri must be an https URL.");
-  }
+  assertReturnUri(returnUri, options);
   return { ...payload, return_uri: returnUri };
 }
 

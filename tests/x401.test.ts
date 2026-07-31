@@ -134,6 +134,29 @@ test("addReturnUri rejects a non-https return_uri", () => {
   );
 });
 
+test("addReturnUri allows an http return_uri when allowInsecureUri is set", () => {
+  const relayed = agent.addReturnUri(
+    buildRequirement(),
+    "http://localhost:3000/x401/return",
+    { allowInsecureUri: true },
+  );
+  assert.equal(relayed.return_uri, "http://localhost:3000/x401/return");
+  const decoded = agent.decodePayload(verifier.encodePayload(relayed), {
+    allowInsecureUri: true,
+  });
+  assert.equal(decoded.return_uri, "http://localhost:3000/x401/return");
+});
+
+test("addReturnUri still rejects a non-string return_uri under allowInsecureUri", () => {
+  assert.throws(
+    () =>
+      agent.addReturnUri(buildRequirement(), 42 as unknown as string, {
+        allowInsecureUri: true,
+      }),
+    X401ValidationError,
+  );
+});
+
 test("parseX401Payload rejects a non-https return_uri", () => {
   const bad = Buffer.from(
     JSON.stringify({
