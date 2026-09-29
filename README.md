@@ -64,7 +64,7 @@ const payload = verifier.buildPayload({
 ```
 
 `protocol` is `openid4vp-v1-signed` or `openid4vp-v1-unsigned`, and its `data` carries the request
-you composed and signed. `requestId` and `satisfiedRequirements` are optional hints.
+you composed and signed. `requestId`, `satisfiedRequirements`, and `oauth.token_endpoint` are optional.
 
 Return it as a header:
 

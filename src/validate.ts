@@ -94,8 +94,11 @@ export function parseX401Payload(
     }
   }
   const oauth = value.oauth;
-  if (!isObject(oauth) || !isString(oauth.token_endpoint)) {
-    throw new X401ValidationError("oauth.token_endpoint is required.");
+  if (!isObject(oauth)) {
+    throw new X401ValidationError("oauth must be an object.");
+  }
+  if (oauth.token_endpoint !== undefined && !isString(oauth.token_endpoint)) {
+    throw new X401ValidationError("oauth.token_endpoint must be a string.");
   }
   if (value.return_uri !== undefined) {
     assertReturnUri(value.return_uri, options);
