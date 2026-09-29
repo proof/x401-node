@@ -174,6 +174,47 @@ test("parseX401Payload rejects a non-https return_uri", () => {
   assert.throws(() => agent.decodePayload(bad), X401ValidationError);
 });
 
+test("buildPayload accepts oauth without a token_endpoint and it round-trips", () => {
+  const payload = verifier.buildPayload({
+    credentialRequirements: SIGNED_REQUEST,
+    oauth: { resource: RESOURCE },
+  });
+  assert.equal(payload.oauth.token_endpoint, undefined);
+  const decoded = agent.decodePayload(verifier.encodePayload(payload));
+  assert.deepEqual(decoded.oauth, { resource: RESOURCE });
+});
+
+test("parseX401Payload rejects a non-string token_endpoint", () => {
+  const bad = Buffer.from(
+    JSON.stringify({
+      scheme: "x401",
+      version: "0.2.0",
+      credential_requirements: {
+        digital: {
+          requests: [{ protocol: "openid4vp-v1-signed", data: {} }],
+        },
+      },
+      oauth: { token_endpoint: 42 },
+    }),
+  ).toString("base64url");
+  assert.throws(() => agent.decodePayload(bad), X401ValidationError);
+});
+
+test("parseX401Payload rejects a missing oauth object", () => {
+  const bad = Buffer.from(
+    JSON.stringify({
+      scheme: "x401",
+      version: "0.2.0",
+      credential_requirements: {
+        digital: {
+          requests: [{ protocol: "openid4vp-v1-signed", data: {} }],
+        },
+      },
+    }),
+  ).toString("base64url");
+  assert.throws(() => agent.decodePayload(bad), X401ValidationError);
+});
+
 test("parseX401Payload rejects a leftover wrapper", () => {
   assert.throws(
     () =>

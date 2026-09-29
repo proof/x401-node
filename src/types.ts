@@ -50,7 +50,7 @@ export interface CredentialResult {
 
 /** OAuth token-exchange metadata carried in `oauth`. */
 export interface OAuthMetadata {
-  token_endpoint: string;
+  token_endpoint?: string;
   audience?: string;
   resource?: string;
 }
