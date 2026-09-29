@@ -50,7 +50,7 @@ export interface CredentialResult {
 
 /** OAuth token-exchange metadata carried in `oauth`. */
 export interface OAuthMetadata {
-  token_endpoint?: string;
+  token_endpoint: string;
   audience?: string;
   resource?: string;
 }
@@ -68,8 +68,8 @@ export interface X401Payload {
   version: string;
   /** The composed credential request. Required. */
   credential_requirements: CredentialRequestOptions;
-  /** OAuth token-exchange metadata. Required. */
-  oauth: OAuthMetadata;
+  /** OAuth token-exchange metadata. Optional. */
+  oauth?: OAuthMetadata;
   /** Stable verifier-defined identifier for the proof template. Optional hint. */
   request_id?: string;
   /** Stable identifiers for reusable proof requirements this proof would satisfy. Optional hint. */
