@@ -45,7 +45,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@owf/identity-common": "^0.3.0"
+    "@owf/identity-common": "^0.4.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
