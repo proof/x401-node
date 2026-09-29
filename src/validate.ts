@@ -103,7 +103,10 @@ export function parseX401Payload(
 }
 
 function assertOAuthMetadata(oauth: unknown): void {
-  if (!isObject(oauth) || !isString(oauth.token_endpoint)) {
+  if (!isObject(oauth)) {
+    throw new X401ValidationError("oauth must be an object.");
+  }
+  if (!isString(oauth.token_endpoint)) {
     throw new X401ValidationError(
       "oauth.token_endpoint is required when oauth is present.",
     );

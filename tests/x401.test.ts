@@ -187,7 +187,13 @@ test("parseX401Payload rejects oauth without a token_endpoint", () => {
       oauth: { resource: RESOURCE },
     }),
   ).toString("base64url");
-  assert.throws(() => agent.decodePayload(bad), X401ValidationError);
+  assert.throws(
+    () => agent.decodePayload(bad),
+    (error: unknown) =>
+      error instanceof X401ValidationError &&
+      error.message ===
+        "oauth.token_endpoint is required when oauth is present.",
+  );
 });
 
 test("parseX401Payload rejects a non-string token_endpoint", () => {
@@ -228,7 +234,12 @@ test("parseX401Payload rejects a non-object oauth", () => {
       oauth: "https://bank.example.com/oauth/token",
     }),
   ).toString("base64url");
-  assert.throws(() => agent.decodePayload(bad), X401ValidationError);
+  assert.throws(
+    () => agent.decodePayload(bad),
+    (error: unknown) =>
+      error instanceof X401ValidationError &&
+      error.message === "oauth must be an object.",
+  );
 });
 
 test("parseX401Payload rejects a leftover wrapper", () => {
