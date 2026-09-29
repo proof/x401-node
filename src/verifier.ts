@@ -33,7 +33,7 @@ interface BuildPayloadInput {
    */
   credentialRequirements: CredentialRequestOptions;
   /** OAuth token-exchange metadata for the Agent. */
-  oauth: OAuthMetadata;
+  oauth?: OAuthMetadata;
   /** Stable verifier-defined identifier for the proof template. Optional hint. */
   requestId?: string;
   /** Reusable proof-requirement identifiers this proof would satisfy. Optional hint. */
@@ -60,7 +60,7 @@ export function buildPayload(input: BuildPayloadInput): X401Payload {
     scheme: X401_SCHEME,
     version: X401_VERSION,
     credential_requirements: input.credentialRequirements,
-    oauth: input.oauth,
+    ...(input.oauth !== undefined && { oauth: input.oauth }),
     ...(input.requestId !== undefined && { request_id: input.requestId }),
     ...(input.satisfiedRequirements !== undefined && {
       satisfied_requirements: input.satisfiedRequirements,

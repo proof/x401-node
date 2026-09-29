@@ -93,17 +93,24 @@ export function parseX401Payload(
       throw new X401ValidationError("request data must be an object.");
     }
   }
-  const oauth = value.oauth;
-  if (!isObject(oauth)) {
-    throw new X401ValidationError("oauth must be an object.");
-  }
-  if (oauth.token_endpoint !== undefined && !isString(oauth.token_endpoint)) {
-    throw new X401ValidationError("oauth.token_endpoint must be a string.");
+  if (value.oauth !== undefined) {
+    assertOAuthMetadata(value.oauth);
   }
   if (value.return_uri !== undefined) {
     assertReturnUri(value.return_uri, options);
   }
   return value as unknown as X401Payload;
+}
+
+function assertOAuthMetadata(oauth: unknown): void {
+  if (!isObject(oauth)) {
+    throw new X401ValidationError("oauth must be an object.");
+  }
+  if (!isString(oauth.token_endpoint)) {
+    throw new X401ValidationError(
+      "oauth.token_endpoint is required when oauth is present.",
+    );
+  }
 }
 
 export function parseResultArtifact(value: unknown): ResultArtifact {
