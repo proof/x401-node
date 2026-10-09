@@ -13,6 +13,7 @@ import {
   parseX401TokenObject,
   X401ValidationError,
 } from "./validate.ts";
+import type { InsecureUriOptions } from "./validate.ts";
 import type {
   CredentialRequestOptions,
   OAuthMetadata,
@@ -88,8 +89,11 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }
 
-export function decodeResultArtifact(headerValue: string): ResultArtifact {
-  return parseResultArtifact(decodeProofHeader(headerValue));
+export function decodeResultArtifact(
+  headerValue: string,
+  options?: InsecureUriOptions,
+): ResultArtifact {
+  return parseResultArtifact(decodeProofHeader(headerValue), options);
 }
 
 export function decodeTokenObject(headerValue: string): X401TokenObject {

@@ -24,12 +24,25 @@ function isString(value: unknown): value is string {
 
 const DC_API_PROTOCOLS: readonly string[] = Object.values(DC_API_PROTOCOL);
 
-export interface ReturnUriOptions {
+export interface InsecureUriOptions {
   /**
-   * Skip the https requirement on `return_uri`, permitting an http URL (e.g. a
-   * `http://localhost` dev transport). Defaults to false.
+   * Skip the https requirement on `return_uri` / `credential_result_uri`,
+   * permitting an http URL (e.g. a `http://localhost` dev transport). Defaults
+   * to false.
    */
   allowInsecureUri?: boolean;
+}
+
+export type ReturnUriOptions = InsecureUriOptions;
+
+function isAllowedUri(
+  value: unknown,
+  options?: InsecureUriOptions,
+): value is string {
+  return (
+    isString(value) &&
+    (options?.allowInsecureUri === true || value.startsWith("https://"))
+  );
 }
 
 /**
@@ -41,10 +54,7 @@ export function assertReturnUri(
   returnUri: unknown,
   options?: ReturnUriOptions,
 ): void {
-  if (
-    !isString(returnUri) ||
-    (!options?.allowInsecureUri && !returnUri.startsWith("https://"))
-  ) {
+  if (!isAllowedUri(returnUri, options)) {
     throw new X401ValidationError("return_uri must be an https URL.");
   }
 }
@@ -113,7 +123,10 @@ function assertOAuthMetadata(oauth: unknown): void {
   }
 }
 
-export function parseResultArtifact(value: unknown): ResultArtifact {
+export function parseResultArtifact(
+  value: unknown,
+  options?: InsecureUriOptions,
+): ResultArtifact {
   if (!isObject(value)) {
     throw new X401ValidationError("Result Artifact must be a JSON object.");
   }
@@ -136,11 +149,7 @@ export function parseResultArtifact(value: unknown): ResultArtifact {
       );
     }
   }
-  if (
-    hasUri &&
-    (!isString(value.credential_result_uri) ||
-      !value.credential_result_uri.startsWith("https://"))
-  ) {
+  if (hasUri && !isAllowedUri(value.credential_result_uri, options)) {
     throw new X401ValidationError(
       "Result Artifact credential_result_uri must be an https URL.",
     );
