@@ -317,6 +317,31 @@ test("Result Artifact with a non-https result uri is rejected", () => {
   );
 });
 
+test("Result Artifact allows an http result uri when allowInsecureUri is set", () => {
+  const insecure = Buffer.from(
+    JSON.stringify({
+      credential_result_uri: "http://localhost:3080/x401/result?ref=abc",
+    }),
+  ).toString("base64url");
+  const decoded = verifier.decodeResultArtifact(insecure, {
+    allowInsecureUri: true,
+  });
+  assert.equal(
+    decoded.credential_result_uri,
+    "http://localhost:3080/x401/result?ref=abc",
+  );
+});
+
+test("Result Artifact still rejects a non-string result uri under allowInsecureUri", () => {
+  const bad = Buffer.from(
+    JSON.stringify({ credential_result_uri: 42 }),
+  ).toString("base64url");
+  assert.throws(
+    () => verifier.decodeResultArtifact(bad, { allowInsecureUri: true }),
+    X401ValidationError,
+  );
+});
+
 test("Result Artifact with both result and uri is rejected", () => {
   const both = Buffer.from(
     JSON.stringify({
