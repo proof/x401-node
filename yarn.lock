@@ -152,9 +152,9 @@ __metadata:
   linkType: hard
 
 "@owf/identity-common@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@owf/identity-common@npm:0.4.0"
-  checksum: 10c0/005d2a7d025d5106337dbf79669e837d2b2b71e06adc9d6dfad0cbd41b5140cb6d0fcbc95db26558ea4c03b117a7adc8773a7073cdaa01203816e072b500b4ff
+  version: 0.4.1
+  resolution: "@owf/identity-common@npm:0.4.1"
+  checksum: 10c0/9b8185e54de12487ebbb776ed80531ee8ed1442a5154943ff50fb7fcb2e1092ecbc0fb3511468071e0c8cadaa942925dc74fc2dd032a58d4adcadb2c794c600c
   languageName: node
   linkType: hard
 
@@ -207,11 +207,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^24.13.2":
-  version: 24.19.0
-  resolution: "@types/node@npm:24.19.0"
+  version: 24.19.1
+  resolution: "@types/node@npm:24.19.1"
   dependencies:
     undici-types: "npm:>=7.24.0 <7.24.7"
-  checksum: 10c0/f38afca05eb323a01243aa06a4cb8e69ef3423e1115e4464a211c6556156c024bb80fadeb7e3691802a247e7e653b70bad8c528b291153e4f48fccecc6159735
+  checksum: 10c0/789822cc68a0e0b632fd0a9fa53411e33541f03c18dc19942ed38161c369bf0b013917b4c6c760688bd2d09d940c827a601add118dfa04fe35a285535b2a8596
   languageName: node
   linkType: hard
 
@@ -535,8 +535,8 @@ __metadata:
   linkType: hard
 
 "eslint@npm:^10.5.0":
-  version: 10.11.0
-  resolution: "eslint@npm:10.11.0"
+  version: 10.12.0
+  resolution: "eslint@npm:10.12.0"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.8.0"
     "@eslint-community/regexpp": "npm:^4.12.2"
@@ -575,7 +575,7 @@ __metadata:
       optional: true
   bin:
     eslint: bin/eslint.js
-  checksum: 10c0/c767f45f21d1921b41d70e30b1c8fa7ec4e65c0f43a8d80cc4990ca3d923127fa7b9b3416b8f5be6e877d9286f97d3c51a04ed341bc6aa73c0dba0f463e1f861
+  checksum: 10c0/1302ce8a7df2f67fe8f4014b2f9449bd38eb86903ba7b841d9a8ca5a5daf8ee15442861ab870e96c0074d5f333b405d7b2f16388981f807db410cc3a02178af9
   languageName: node
   linkType: hard
 
@@ -975,8 +975,8 @@ __metadata:
   linkType: hard
 
 "publint@npm:^0.3.21":
-  version: 0.3.24
-  resolution: "publint@npm:0.3.24"
+  version: 0.3.25
+  resolution: "publint@npm:0.3.25"
   dependencies:
     "@publint/pack": "npm:^0.1.7"
     package-manager-detector: "npm:^1.8.0"
@@ -984,7 +984,7 @@ __metadata:
     sade: "npm:^1.8.1"
   bin:
     publint: ./src/cli.js
-  checksum: 10c0/ad938ca375aa196845cd2705c49295662839fb991374c24d9acb85945177ebe73c95c8b82666858826b36a8dad943427a0ef0eb1f8b7eaa8abe4c8bc5f55781c
+  checksum: 10c0/b58e915978d90bce5e84295eb78b9393b58b11590f93603c03f96da5366a6474c05111c13b3aa68a0c33fa2e5215cecf15cfcb4026abadf7e01f5ec4cc82207e
   languageName: node
   linkType: hard
 
