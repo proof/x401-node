@@ -33,7 +33,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "check-all": "yarn format && yarn lint && yarn typecheck && yarn test && yarn publint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
