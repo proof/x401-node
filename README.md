@@ -223,7 +223,7 @@ const { access_token } = verifier.decodeTokenObject(
 
 [proof-vc-server](https://github.com/proof/proof-vc-common) signs the request for a Proof Digital ID
 and verifies the Digital ID that the user presents. It needs the client ID and signing key of an
-[enrolled Verifier](https://github.com/proof/proof-vc-common#verifier-enrollment).
+[enrolled Verifier](https://github.com/proof/proof-vc-common#enroll-an-x401-verifier).
 
 ```sh
 npm install @proof.com/proof-vc-server
